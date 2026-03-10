@@ -1,0 +1,10 @@
+Final Report (IEEE Format)
+* 3-4 pages describing:
+    – Names of group members.
+    – Motivation
+    – System architecture overview.
+    – Explanation of how each requirement is satisfied.
+    – Discussion of rendering pipeline and design decisions.
+    – Reflection.
+
+Google Docs Link: https://docs.google.com/document/d/1GV_izxQylrAY55Xm5cEOAcqLq-TNoW06/edit?usp=sharing&ouid=118341729073918873652&rtpof=true&sd=true
