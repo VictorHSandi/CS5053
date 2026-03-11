@@ -17,7 +17,7 @@ export const PROJECTILE_MASS = 2.0;
 export const PROJECTILE_LIFETIME = 8.0; // seconds before auto-deactivate
 
 // ── Flight control (post-launch air nudge) ───────────────
-export const FLIGHT_STEER_FORCE = 2.5; // lateral nudge strength
+export const FLIGHT_STEER_FORCE = 15.5; // lateral nudge strength
 export const FLIGHT_PITCH_FORCE = 2.0; // up/down nudge strength
 export const FLIGHT_BOOST_IMPULSE = 5.0; // one-time forward boost
 export const FLIGHT_MAX_NUDGES = 6; // limited air-control budget
@@ -39,4 +39,4 @@ export const CAM_TRANSITION_DURATION = 0.6; // seconds
 // ── World ────────────────────────────────────────────────
 export const GROUND_SIZE = 200;
 export const GROUND_Y = 0;
-export const SKY_COLOR = { r: 0.53, g: 0.81, b: 0.92 };
+export const SKY_COLOR = { r: 0.25, g: 0.12, b: 0.11 };
