@@ -6,10 +6,10 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";  // NEW
-import { PhysicsAggregate } from "@babylonjs/core/Physics/v2/physicsAggregate"; // NEW
-import { PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin"; // NEW
-import HavokPhysics from "@babylonjs/havok";                                     // NEW
+import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";  
+import { PhysicsAggregate } from "@babylonjs/core/Physics/v2/physicsAggregate"; 
+import { PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin"; 
+import HavokPhysics from "@babylonjs/havok";                                    
 import { GROUND_SIZE, SKY_COLOR } from "../utils/Constants";
  
 /**
@@ -21,9 +21,9 @@ export async function setupEnvironment(scene: Scene): Promise<{ shadowGenerator:
     scene.clearColor = new Color4(SKY_COLOR.r, SKY_COLOR.g, SKY_COLOR.b, 1);
  
     // ── Havok physics engine ──────────────────────────────
-    const havokInstance = await HavokPhysics();           // NEW
-    const havokPlugin = new HavokPlugin(true, havokInstance); // NEW
-    scene.enablePhysics(new Vector3(0, -9.81, 0), havokPlugin); // NEW
+    const havokInstance = await HavokPhysics();           
+    const havokPlugin = new HavokPlugin(true, havokInstance); 
+    scene.enablePhysics(new Vector3(0, -9.81, 0), havokPlugin); 
  
     // Ambient hemisphere light
     const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
@@ -48,8 +48,8 @@ export async function setupEnvironment(scene: Scene): Promise<{ shadowGenerator:
     ground.material = groundMat;
     ground.receiveShadows = true;
  
-    // Give the ground a static physics body so blocks land on it  // NEW
-    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene); // NEW
+    // Give the ground a static physics body so blocks land on it  
+    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
  
     return { shadowGenerator: shadowGen };
 }
