@@ -2,7 +2,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Projectile } from "../entities/Projectile";
 import { Target } from "../entities/Target";
 import { Obstacle } from "../entities/Obstacle";
-import { TARGET_HIT_VELOCITY_MIN } from "../utils/Constants";
+import { TARGET_HIT_VELOCITY_MIN, OBSTACLE_IMPULSE_MULT } from "../utils/Constants";
 
 export interface CollisionResult {
     targetsHit: Target[];
@@ -58,7 +58,19 @@ export class TargetSystem {
                     result.obstaclesHit.push(obs);
                     result.totalScore += 25; // small bonus for breaking structures
                 }
-                // Reflect / stop projectile on obstacle hit
+
+                // Apply physics impulse to the block
+                // Direction: from projectile toward block center, slightly upward
+                const impulseDir = obs.mesh.position
+                    .subtract(pPos)
+                    .normalize()
+                    .add(new Vector3(0, 0.2, 0)) // slight upward kick
+                    .normalize();
+
+                const impulseMag = speed * OBSTACLE_IMPULSE_MULT;
+                obs.applyImpulse(impulseDir.scale(impulseMag), pPos);
+
+                // Slow down projectile on impact (unchanged)
                 projectile.velocity = projectile.velocity.scale(0.15);
             }
         }

@@ -81,6 +81,12 @@ export class Obstacle {
         this._physicsAggregate.dispose();                                     
     }
 
+    /** Apply a physics impulse at a world-space contact point. */
+    applyImpulse(impulse: Vector3, contactPoint: Vector3): void {
+        if (this.destroyed) return;
+        this._physicsAggregate.body.applyImpulse(impulse, contactPoint);
+    }
+
     dispose(): void {
         this._physicsAggregate.dispose(); // NEW
         this.mesh.dispose();
