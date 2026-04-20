@@ -27,16 +27,16 @@ export class SceneManager {
         window.addEventListener("resize", () => this.engine.resize());
     }
 
-    private _createScene(): void {
+    private async _createScene(): Promise<void> {
         this.scene = new Scene(this.engine);
-        const env = setupEnvironment(this.scene);
+        const env = await setupEnvironment(this.scene);
         this.shadowGenerator = env.shadowGenerator;
     }
 
     /** Tear down and rebuild the scene (used for hard resets if needed). */
     recreateScene(): void {
         this.scene.dispose();
-        this._createScene();
+        this._createScene().then(() => {});
     }
 
     /** Start the render loop. `beforeRender` is called each frame with delta-time in seconds. */
