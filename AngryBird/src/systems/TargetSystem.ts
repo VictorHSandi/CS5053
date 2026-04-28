@@ -52,25 +52,24 @@ export class TargetSystem {
             const bb = obs.mesh.getBoundingInfo().boundingBox;
             const closest = Vector3.Clamp(pPos, bb.minimumWorld, bb.maximumWorld);
             const dist = Vector3.Distance(pPos, closest);
-            if (dist < pRad) {
-                const destroyed = obs.hit();
-                if (destroyed) {
-                    result.obstaclesHit.push(obs);
-                    result.totalScore += 25; // small bonus for breaking structures
-                }
+            if (dist < pRad * 2.5) {
 
-                // Apply physics impulse to the block
-                // Direction: from projectile toward block center, slightly upward
+                // Apply impulse FIRST before any destruction check
                 const impulseDir = obs.mesh.position
                     .subtract(pPos)
                     .normalize()
-                    .add(new Vector3(0, 0.2, 0)) // slight upward kick
+                    .add(new Vector3(0, 0.2, 0))
                     .normalize();
-
                 const impulseMag = speed * OBSTACLE_IMPULSE_MULT;
                 obs.applyImpulse(impulseDir.scale(impulseMag), pPos);
 
-                // Slow down projectile on impact (unchanged)
+                // THEN apply damage
+                const destroyed = obs.hit();
+                if (destroyed) {
+                    result.obstaclesHit.push(obs);
+                    result.totalScore += 25;
+                }
+
                 projectile.velocity = projectile.velocity.scale(0.15);
             }
         }

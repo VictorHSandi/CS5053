@@ -29,8 +29,11 @@ export class Obstacle {
     public destructible: boolean;
     public destroyed = false;
     private _physicsAggregate: PhysicsAggregate;
+    private _scene: Scene;
+    private _lastHitTime = 0;
 
     constructor(scene: Scene, config: ObstacleConfig) {
+        this._scene = scene;
         this.id = uid("obstacle");
         const size = config.size ?? new Vector3(1, 1, 1);
         this.health = config.health ?? 2;
@@ -62,10 +65,17 @@ export class Obstacle {
             },
             scene,
         );
+        this._physicsAggregate.body.disablePreStep = false; 
     }
 
     hit(damage = 1): boolean {
         if (this.destroyed || !this.destructible) return false;
+
+        // Cooldown — only take damage once per second   // NEW
+        const now = Date.now();
+        if (now - this._lastHitTime < 1000) return false; // NEW
+        this._lastHitTime = now;                           // NEW
+
         this.health -= damage;
         if (this.health <= 0) {
             this.destroy();
@@ -83,8 +93,17 @@ export class Obstacle {
 
     /** Apply a physics impulse at a world-space contact point. */
     applyImpulse(impulse: Vector3, contactPoint: Vector3): void {
-        if (this.destroyed) return;
-        this._physicsAggregate.body.applyImpulse(impulse, contactPoint);
+        // if (this.destroyed) return; // removed
+        const body = this._physicsAggregate.body;
+        const bodyId = (body as any)._pluginData.hpBodyId;
+        const plugin = (this._scene as any)
+            .getPhysicsEngine()
+            ._physicsPlugin;
+        plugin._hknp.HP_Body_ApplyImpulse(
+            bodyId,
+            [impulse.x, impulse.y, impulse.z],
+            [contactPoint.x, contactPoint.y, contactPoint.z]
+        );
     }
 
     dispose(): void {

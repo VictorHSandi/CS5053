@@ -4,10 +4,10 @@
 
 // ── Physics ──────────────────────────────────────────────
 export const GRAVITY = -9.81;
-export const OBSTACLE_MASS        = 5.0;   // kg — heavier = harder to knock over
-export const OBSTACLE_RESTITUTION = 0.2;   // bounciness (0 = dead stop, 1 = full bounce)
-export const OBSTACLE_FRICTION    = 0.7;   // surface grip
-export const OBSTACLE_IMPULSE_MULT = 0.8; // projectile speed → impulse strength
+export const OBSTACLE_MASS        = 30.0;   // kg — heavier = harder to knock over
+export const OBSTACLE_RESTITUTION = 0.01;   // bounciness (0 = dead stop, 1 = full bounce)
+export const OBSTACLE_FRICTION    = 0.9;   // surface grip
+export const OBSTACLE_IMPULSE_MULT = 0.1; // projectile speed → impulse strength
 
 // ── Launcher / Aiming ────────────────────────────────────
 export const LAUNCHER_MAX_PULL = 3.0; // max drag distance in world units

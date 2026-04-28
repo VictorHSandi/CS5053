@@ -65,9 +65,12 @@ export class Game {
         // State-change listener
         this._state.onChange((_prev, next) => this._onStateChange(next));
 
-        // Load first level and start
-        this._loadLevel();
-        this._sceneManager.run((dt) => this._update(dt));
+        // Wait for Havok to initialize before loading the level
+        // This replaces the old direct _loadLevel() + run() calls
+        this._sceneManager.ready.then(() => {
+            this._loadLevel();
+            this._sceneManager.run((dt) => this._update(dt));
+        });
     }
 
     // ══════════════════════════════════════════════════════
@@ -115,7 +118,7 @@ export class Game {
                 this._ui.hud.setHint("Drag down & sideways to aim • Release to launch");
                 break;
             case GameState.Flying:
-                this._ui.hud.setHint("WASD / Arrows = nudge • Space = boost (once)");
+                this._ui.hud.setHint("WASD / Arrows = nudge • Space = boost (once) • G = toggle gravity");
                 break;
             case GameState.Won:
                 this._showWin();
@@ -174,9 +177,6 @@ export class Game {
     // ── Aiming ────────────────────────────────────────────
 
     private _updateAiming(): void {
-        // Check release BEFORE calling launcher.update().
-        // When pointerJustReleased=true, pointerDown is already false, so
-        // update() would reset pullDistance to 0 before we can read it.
         if (this._input.pointerJustReleased && this._launcher.pullDistance > 0.15) {
             this._doLaunch();
             return;
@@ -190,7 +190,6 @@ export class Game {
         this._projectile.spawn(this._launcher.launchPoint);
         this._projectile.launch(vel);
 
-        // Begin camera transition
         const camStart = this._camera.camera.position.clone();
         const camStartLook = this._camera.camera.getTarget();
 
@@ -210,7 +209,6 @@ export class Game {
     private _updateLaunching(dt: number): void {
         this._projectile.update(dt);
         const done = this._camera.update(dt, this._projectile.position, this._projectile.velocity);
-        // Run collision even during transition
         this._runCollisions();
         if (done) {
             this._state.transition(GameState.Flying);
@@ -227,7 +225,6 @@ export class Game {
         this._runCollisions();
 
         if (!stillAlive) {
-            // Projectile hit ground or timed out
             this._state.transition(GameState.Evaluating);
         }
     }
@@ -235,7 +232,6 @@ export class Game {
     // ── Evaluating ────────────────────────────────────────
 
     private _updateEvaluating(dt: number): void {
-        // Brief pause before deciding win/lose/retry
         this._evaluateDelay += dt;
         if (this._evaluateDelay < 0.8) return;
         this._evaluateDelay = 0;
@@ -245,7 +241,6 @@ export class Game {
         } else if (this._score.shotsUsed >= this._levels.currentDef.maxShots) {
             this._state.transition(GameState.Lost);
         } else {
-            // Reset for next shot
             this._prepareNextShot();
         }
     }
