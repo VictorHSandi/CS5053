@@ -12,8 +12,8 @@ export const OBSTACLE_IMPULSE_MULT = 0.1; // projectile speed → impulse streng
 // ── Launcher / Aiming ────────────────────────────────────
 export const LAUNCHER_MAX_PULL = 3.0; // max drag distance in world units
 export const LAUNCHER_POWER_MULT = 12.0; // pull distance → launch speed
-export const TRAJECTORY_SEGMENTS = 40; // dots in trajectory preview
-export const TRAJECTORY_TIME_STEP = 0.06; // seconds per segment
+export const TRAJECTORY_SEGMENTS = 60; // dots in trajectory preview
+export const TRAJECTORY_TIME_STEP = 0.12; // seconds per segment
 
 // ── Projectile ───────────────────────────────────────────
 export const PROJECTILE_RADIUS = 0.35;

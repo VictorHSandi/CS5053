@@ -56,11 +56,11 @@ export class Game {
         this._launcher = new LauncherSystem(scene);
         this._projectile = new ProjectileSystem(scene);
         this._flight = new FlightControlSystem();
-        this._gravity = new GravitySystem(this._sceneManager.scene);
+        this._ui = new UIManager(scene);
+        this._gravity = new GravitySystem(this._sceneManager.scene, this._ui.hud);
         this._targets = new TargetSystem();
         this._score = new ScoreSystem();
         this._levels = new LevelManager();
-        this._ui = new UIManager(scene);
 
         // Wire UI callbacks
         this._ui.winScreen.onNext = () => this._advanceLevel();
@@ -119,9 +119,6 @@ export class Game {
 
     private _onStateChange(next: GameState): void {
         switch (next) {
-            case GameState.Aiming:
-                this._ui.hud.setHint("Drag down & sideways to aim • Release to launch");
-                break;
             case GameState.Flying:
                 this._ui.hud.setHint("WASD / Arrows = nudge • Space = boost (once) • G = toggle gravity");
                 break;
@@ -191,7 +188,7 @@ export class Game {
             this._doLaunch();
             return;
         }
-        this._launcher.update(this._input);
+        this._launcher.update(this._input, this._gravity.currentGravity);
     }
 
     private _doLaunch(): void {
@@ -217,7 +214,7 @@ export class Game {
     // ── Launching (camera transition) ─────────────────────
 
     private _updateLaunching(dt: number): void {
-        this._projectile.update(dt);
+        this._projectile.update(dt, this._gravity.currentGravity); // UPDATED
         const done = this._camera.update(dt, this._projectile.position, this._projectile.velocity);
         this._runCollisions();
         if (done) {
@@ -230,7 +227,7 @@ export class Game {
     private _updateFlying(dt: number): void {
         this._flight.update(this._projectile.projectile, this._input, dt);
 
-        const stillAlive = this._projectile.update(dt);
+        const stillAlive = this._projectile.update(dt, this._gravity.currentGravity);
         this._camera.update(dt, this._projectile.position, this._projectile.velocity);
         this._runCollisions();
 

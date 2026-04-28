@@ -26,11 +26,11 @@ export class ProjectileSystem {
     /**
      * Per-frame update. Returns true while projectile is still active.
      */
-    update(dt: number): boolean {
+    update(dt: number, gravity: number = GRAVITY): boolean {
         const p = this.projectile;
         if (!p.active) return false;
 
-        p.update(dt, GRAVITY);
+        p.update(dt, gravity);
 
         // Ground collision
         if (p.mesh.position.y <= p.radius) {
@@ -40,8 +40,12 @@ export class ProjectileSystem {
             return false;
         }
 
-        // Lifetime timeout
-        if (p.lifetime >= PROJECTILE_LIFETIME) {
+        // Lifetime — extend on moon gravity since ball travels much further
+        const maxLifetime = gravity === -1.62 
+            ? PROJECTILE_LIFETIME * 4   // moon — 4x longer
+            : PROJECTILE_LIFETIME;      // earth — normal
+
+        if (p.lifetime >= maxLifetime) {
             p.deactivate();
             return false;
         }

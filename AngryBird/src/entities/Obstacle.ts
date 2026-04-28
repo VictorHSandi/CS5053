@@ -71,10 +71,16 @@ export class Obstacle {
     hit(damage = 1): boolean {
         if (this.destroyed || !this.destructible) return false;
 
-        // Cooldown — only take damage once per second   // NEW
+        // Cooldown — only take damage once per second   
         const now = Date.now();
-        if (now - this._lastHitTime < 1000) return false; // NEW
-        this._lastHitTime = now;                           // NEW
+        if (now - this._lastHitTime < 1000) return false; 
+        this._lastHitTime = now;                           
+
+        // Visual damage feedback — darken block as health drops   
+        const mat = this.mesh.material as StandardMaterial;        
+        const healthRatio = Math.max(this.health, 0) / (this.health + damage); 
+        mat.diffuseColor = mat.diffuseColor.scale(0.65);           // darken on each hit
+
 
         this.health -= damage;
         if (this.health <= 0) {
