@@ -12,6 +12,7 @@ import { ScoreSystem, ScoreBreakdown } from "../systems/ScoreSystem";
 import { LevelManager } from "../levels/LevelManager";
 import { toVec3 } from "../levels/LevelData";
 import { UIManager } from "../ui/UIManager";
+import { GravitySystem } from "../systems/GravitySystem";
 
 /**
  * Top-level game controller.
@@ -40,6 +41,9 @@ export class Game {
     // Misc
     private _evaluateDelay = 0;
 
+    //Gravity
+    private _gravity: GravitySystem;
+
     constructor(canvas: HTMLCanvasElement) {
         // ── Bootstrap ──────────────────────────────────────
         this._sceneManager = new SceneManager(canvas);
@@ -52,6 +56,7 @@ export class Game {
         this._launcher = new LauncherSystem(scene);
         this._projectile = new ProjectileSystem(scene);
         this._flight = new FlightControlSystem();
+        this._gravity = new GravitySystem(this._sceneManager.scene);
         this._targets = new TargetSystem();
         this._score = new ScoreSystem();
         this._levels = new LevelManager();
@@ -126,6 +131,9 @@ export class Game {
             case GameState.Lost:
                 this._ui.showLose();
                 break;
+            case GameState.Aiming:
+                this._ui.hud.setHint("Drag to aim • Release to launch • G = toggle gravity");
+                break;
         }
     }
 
@@ -154,6 +162,8 @@ export class Game {
                 this._levels.aliveTargetCount,
             );
         }
+
+        this._gravity.update(this._input);
 
         switch (state) {
             case GameState.Aiming:
