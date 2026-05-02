@@ -25,12 +25,13 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     hemi.specular = new Color3(0.12, 0.12, 0.12);
     hemi.groundColor = new Color3(0.35, 0.3, 0.25);
 
-    // Directional sun from launcher side (negative X) toward the target side (positive X)
-    const sun = new DirectionalLight("sun", new Vector3(1, -1.6, 0.2).normalize(), scene);
+    // Directional sun from launcher side (negative X) toward targets (positive X).
+    // Moderate downward angle keeps object shadows readable while launcher base now contacts ground.
+    const sun = new DirectionalLight("sun", new Vector3(1, -1.1, -0.45).normalize(), scene);
     sun.intensity = 0.9;
     sun.diffuse = new Color3(1, 0.96, 0.9);
     sun.specular = new Color3(0.95, 0.95, 0.95);
-    sun.position = new Vector3(-34, 34, -4);
+    sun.position = new Vector3(-90, 36, 0);
 
     // Shadows
     const shadowGen = new ShadowGenerator(1024, sun);

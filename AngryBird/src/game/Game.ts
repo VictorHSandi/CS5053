@@ -101,7 +101,9 @@ export class Game {
         }
 
         this._launcher.registerShadowCasters(shadowGen);
-        shadowGen.addShadowCaster(this._projectile.projectile.mesh);
+        if (this._projectile.active) {
+            shadowGen.addShadowCaster(this._projectile.projectile.mesh);
+        }
         for (const target of this._levels.targets) {
             shadowGen.addShadowCaster(target.mesh);
         }
@@ -208,6 +210,7 @@ export class Game {
         this._score.recordShot();
         this._projectile.spawn(this._launcher.launchPoint);
         this._projectile.launch(vel);
+        this._refreshShadowCasters();
 
         // Begin camera transition
         const camStart = this._camera.camera.position.clone();
@@ -272,6 +275,7 @@ export class Game {
     private _prepareNextShot(): void {
         const def = this._levels.currentDef;
         this._projectile.spawn(this._launcher.launchPoint);
+        this._refreshShadowCasters();
         this._launcher.configure(toVec3(def.launcherPosition), toVec3(def.launchDirection));
         this._launcher.setVisible(true);
         this._camera.setAimView(toVec3(def.launcherPosition));

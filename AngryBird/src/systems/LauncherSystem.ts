@@ -41,7 +41,7 @@ export class LauncherSystem {
         // Simple Y-shaped slingshot post
         this._slingshotBase = MeshBuilder.CreateCylinder(
             "slingPost",
-            { height: 2.2, diameterTop: 0.15, diameterBottom: 0.25 },
+            { height: 3.2, diameterTop: 0.15, diameterBottom: 0.25 },
             scene,
         );
         const postMat = new StandardMaterial("postMat", scene);
@@ -52,7 +52,7 @@ export class LauncherSystem {
         // Left fork
         const forkL = MeshBuilder.CreateCylinder("forkL", { height: 1, diameter: 0.12 }, scene);
         forkL.parent = this._slingshotBase;
-        forkL.position = new Vector3(-0.25, 1.1, 0);
+        forkL.position = new Vector3(-0.25, 1.6, 0);
         forkL.rotation.z = -0.45;
         forkL.material = postMat;
         forkL.receiveShadows = true;
@@ -60,7 +60,7 @@ export class LauncherSystem {
         // Right fork
         const forkR = MeshBuilder.CreateCylinder("forkR", { height: 1, diameter: 0.12 }, scene);
         forkR.parent = this._slingshotBase;
-        forkR.position = new Vector3(0.25, 1.1, 0);
+        forkR.position = new Vector3(0.25, 1.6, 0);
         forkR.rotation.z = 0.45;
         forkR.material = postMat;
         forkR.receiveShadows = true;
@@ -94,7 +94,7 @@ export class LauncherSystem {
         this.origin = origin.clone();
         this.direction = direction.normalize();
         this._slingshotBase.position = origin.clone();
-        this._slingshotBase.position.y = origin.y + 1.1; // half-height offset
+        this._slingshotBase.position.y = origin.y + 0.6; // keeps launch top at origin.y + 2.2 while grounding the post
         this.pullDistance = 0;
         this.launchVelocity = Vector3.Zero();
     }
