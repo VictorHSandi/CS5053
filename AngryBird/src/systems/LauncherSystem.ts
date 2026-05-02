@@ -109,18 +109,9 @@ export class LauncherSystem {
             const rawPull = input.dragDY / (input.canvasHeight * 0.35);
             this.pullDistance = clamp(rawPull, 0, 1) * LAUNCHER_MAX_PULL;
 
-            // Horizontal drag can angle the shot laterally
-            const lateralAngle = -(input.dragDX / (input.canvasWidth * 0.5)) * 0.6; // ±0.6 rad
-
-            // Compute velocity vector
+            // 2D-style aiming: direction is fixed, drag only controls power.
             const speed = this.pullDistance * LAUNCHER_POWER_MULT;
-            const dir = this.direction.clone();
-            // Rotate direction around Y by lateral angle
-            const cosA = Math.cos(lateralAngle);
-            const sinA = Math.sin(lateralAngle);
-            const rx = dir.x * cosA - dir.z * sinA;
-            const rz = dir.x * sinA + dir.z * cosA;
-            this.launchVelocity = new Vector3(rx, dir.y, rz).normalize().scale(speed);
+            this.launchVelocity = this.direction.clone().normalize().scale(speed);
         } else {
             this.pullDistance = 0;
         }

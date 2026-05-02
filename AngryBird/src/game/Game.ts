@@ -10,7 +10,7 @@ import { FlightControlSystem } from "../systems/FlightControlSystem";
 import { TargetSystem } from "../systems/TargetSystem";
 import { ScoreSystem, ScoreBreakdown } from "../systems/ScoreSystem";
 import { LevelManager } from "../levels/LevelManager";
-import { toVec3 } from "../levels/LevelData";
+import { LevelDef, toVec3 } from "../levels/LevelData";
 import { UIManager } from "../ui/UIManager";
 
 /**
@@ -87,9 +87,26 @@ export class Game {
         this._score.reset();
         this._evaluateDelay = 0;
 
-        this._camera.setAimView(toVec3(def.launcherPosition));
+        this._camera.setAimView(toVec3(def.launcherPosition), this._computeAimMaxX(def));
         this._ui.hideOverlays();
         this._state.transition(GameState.Aiming);
+    }
+
+    /** Rightmost X bound used for adaptive 2D aiming camera framing. */
+    private _computeAimMaxX(def: LevelDef): number {
+        let maxX = def.launcherPosition.x;
+
+        for (const t of def.targets) {
+            const radius = (t.size ?? 0.8) * 0.5;
+            maxX = Math.max(maxX, t.position.x + radius);
+        }
+
+        for (const o of def.obstacles) {
+            const halfWidth = (o.size?.x ?? 1) * 0.5;
+            maxX = Math.max(maxX, o.position.x + halfWidth);
+        }
+
+        return maxX;
     }
 
     /** Keep shadow caster list in sync with currently active level meshes. */
@@ -133,10 +150,10 @@ export class Game {
     private _onStateChange(next: GameState): void {
         switch (next) {
             case GameState.Aiming:
-                this._ui.hud.setHint("Drag down & sideways to aim • Release to launch");
+                this._ui.hud.setHint("Drag down to set power • Release to launch");
                 break;
             case GameState.Flying:
-                this._ui.hud.setHint("WASD / Arrows = nudge • Space = boost (once)");
+                this._ui.hud.setHint("WASD / Arrows = steer • Space = boost (once)");
                 break;
             case GameState.Won:
                 this._showWin();
@@ -278,7 +295,7 @@ export class Game {
         this._refreshShadowCasters();
         this._launcher.configure(toVec3(def.launcherPosition), toVec3(def.launchDirection));
         this._launcher.setVisible(true);
-        this._camera.setAimView(toVec3(def.launcherPosition));
+        this._camera.setAimView(toVec3(def.launcherPosition), this._computeAimMaxX(def));
         this._state.transition(GameState.Aiming);
     }
 

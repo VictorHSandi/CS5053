@@ -5,7 +5,6 @@ import {
     FLIGHT_STEER_FORCE,
     FLIGHT_PITCH_FORCE,
     FLIGHT_BOOST_IMPULSE,
-    FLIGHT_MAX_NUDGES,
 } from "../utils/Constants";
 
 /**
@@ -20,22 +19,20 @@ export class FlightControlSystem {
     update(projectile: Projectile, input: InputController, dt: number): void {
         if (!projectile.active) return;
 
-        const nudgeUsed = { value: false };
-
         // ── Lateral steering (A/D or ArrowLeft/ArrowRight) ──
         if (input.keys.has("KeyA") || input.keys.has("ArrowLeft")) {
-            this._applyNudge(projectile, new Vector3(0, 0, -1), FLIGHT_STEER_FORCE, dt, nudgeUsed);
+            this._applySteer(projectile, new Vector3(0, 0, 1), FLIGHT_STEER_FORCE, dt);
         }
         if (input.keys.has("KeyD") || input.keys.has("ArrowRight")) {
-            this._applyNudge(projectile, new Vector3(0, 0, 1), FLIGHT_STEER_FORCE, dt, nudgeUsed);
+            this._applySteer(projectile, new Vector3(0, 0, -1), FLIGHT_STEER_FORCE, dt);
         }
 
         // ── Pitch adjustment (W/S or ArrowUp/ArrowDown) ─────
         if (input.keys.has("KeyW") || input.keys.has("ArrowUp")) {
-            this._applyNudge(projectile, new Vector3(0, 1, 0), FLIGHT_PITCH_FORCE, dt, nudgeUsed);
+            this._applySteer(projectile, new Vector3(0, 1, 0), FLIGHT_PITCH_FORCE, dt);
         }
         if (input.keys.has("KeyS") || input.keys.has("ArrowDown")) {
-            this._applyNudge(projectile, new Vector3(0, -1, 0), FLIGHT_PITCH_FORCE, dt, nudgeUsed);
+            this._applySteer(projectile, new Vector3(0, -1, 0), FLIGHT_PITCH_FORCE, dt);
         }
 
         // ── One-time boost (Space) ──────────────────────────
@@ -48,18 +45,7 @@ export class FlightControlSystem {
         }
     }
 
-    private _applyNudge(
-        proj: Projectile,
-        dir: Vector3,
-        force: number,
-        dt: number,
-        nudgeUsed: { value: boolean },
-    ): void {
-        if (proj.nudgesUsed >= FLIGHT_MAX_NUDGES) return;
+    private _applySteer(proj: Projectile, dir: Vector3, force: number, dt: number): void {
         proj.velocity.addInPlace(dir.scale(force * dt));
-        if (!nudgeUsed.value) {
-            proj.nudgesUsed++;
-            nudgeUsed.value = true;
-        }
     }
 }

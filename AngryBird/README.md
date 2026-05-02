@@ -38,12 +38,11 @@ The twist: you aim in a classic side-on 2D view, then the camera swoops into a *
 | Input | Action |
 |---|---|
 | **Click + drag down** | Pull slingshot (more pull = more power) |
-| **Drag left / right** | Aim laterally |
 | **Release mouse** | Launch the projectile |
-| **W / ↑** | Nudge projectile up (mid-air) |
-| **S / ↓** | Nudge projectile down (mid-air) |
-| **A / ←** | Nudge projectile left (mid-air) |
-| **D / →** | Nudge projectile right (mid-air) |
+| **W / ↑** | Steer projectile up (mid-air) |
+| **S / ↓** | Steer projectile down (mid-air) |
+| **A / ←** | Steer projectile left (mid-air) |
+| **D / →** | Steer projectile right (mid-air) |
 | **Space** | One-time forward boost (mid-air) |
 
 ---

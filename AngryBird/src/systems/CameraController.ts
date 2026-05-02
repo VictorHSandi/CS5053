@@ -1,9 +1,13 @@
 import { Scene } from "@babylonjs/core/scene";
+import { Camera } from "@babylonjs/core/Cameras/camera";
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import {
     CAM_AIM_DISTANCE,
     CAM_AIM_HEIGHT,
+    CAM_AIM_LOOKAHEAD_X,
+    CAM_AIM_TARGET_HEIGHT,
+    CAM_AIM_ORTHO_HALF_HEIGHT,
     CAM_FOLLOW_DISTANCE,
     CAM_FOLLOW_HEIGHT,
     CAM_TRANSITION_DURATION,
@@ -22,6 +26,8 @@ export enum CameraMode {
 export class CameraController {
     public camera: FreeCamera;
     public mode: CameraMode = CameraMode.Aim;
+    private _scene: Scene;
+    private _aimMaxX: number | null = null;
 
     // aiming
     private _aimTarget = Vector3.Zero();
@@ -35,6 +41,7 @@ export class CameraController {
     private _transDuration = CAM_TRANSITION_DURATION;
 
     constructor(scene: Scene) {
+        this._scene = scene;
         this.camera = new FreeCamera("mainCam", new Vector3(0, CAM_AIM_HEIGHT, -CAM_AIM_DISTANCE), scene);
         this.camera.minZ = 0.1;
         this.camera.maxZ = 500;
@@ -44,21 +51,30 @@ export class CameraController {
     }
 
     /** Position the aiming camera to look at the launcher from the side. */
-    setAimView(launcherPos: Vector3): void {
+    setAimView(launcherPos: Vector3, aimMaxX?: number): void {
         this.mode = CameraMode.Aim;
         this._aimTarget = launcherPos.clone();
+        this._aimMaxX = aimMaxX ?? null;
         // Camera sits to the side and slightly above
         this.camera.position = new Vector3(
             launcherPos.x,
             launcherPos.y + CAM_AIM_HEIGHT,
             launcherPos.z - CAM_AIM_DISTANCE,
         );
-        this.camera.setTarget(new Vector3(launcherPos.x + 8, launcherPos.y + 2, launcherPos.z));
+        this.camera.setTarget(
+            new Vector3(
+                launcherPos.x + CAM_AIM_LOOKAHEAD_X,
+                launcherPos.y + CAM_AIM_TARGET_HEIGHT,
+                launcherPos.z,
+            ),
+        );
+        this._applyAimOrtho();
     }
 
     /** Kick off a smooth transition from current position to follow position. */
     beginTransition(startPos: Vector3, startLook: Vector3, endPos: Vector3, endLook: Vector3): void {
         this.mode = CameraMode.Transition;
+        this.camera.mode = Camera.PERSPECTIVE_CAMERA;
         this._transFrom = startPos.clone();
         this._transTo = endPos.clone();
         this._transLookFrom = startLook.clone();
@@ -72,6 +88,11 @@ export class CameraController {
      * @returns true when a transition just finished (so caller can switch to Follow).
      */
     update(dt: number, projectilePos?: Vector3, projectileVel?: Vector3): boolean {
+        if (this.mode === CameraMode.Aim) {
+            // Keeps orthographic framing stable after browser resizes.
+            this._applyAimOrtho();
+        }
+
         if (this.mode === CameraMode.Transition) {
             this._transElapsed += dt;
             const t = smoothStep(Math.min(this._transElapsed / this._transDuration, 1));
@@ -95,5 +116,33 @@ export class CameraController {
         }
 
         return false;
+    }
+
+    private _applyAimOrtho(): void {
+        const engine = this._scene.getEngine();
+        const renderHeight = Math.max(engine.getRenderHeight(), 1);
+        const aspect = engine.getRenderWidth() / renderHeight;
+        const baseHalfHeight = CAM_AIM_ORTHO_HALF_HEIGHT;
+        const baseHalfWidth = baseHalfHeight * aspect;
+
+        let halfWidth = baseHalfWidth;
+        if (this._aimMaxX !== null) {
+            const centerX = this._aimTarget.x + CAM_AIM_LOOKAHEAD_X;
+            const rightPadding = 2;
+            const requiredHalfWidth = this._aimMaxX - centerX + rightPadding;
+            if (requiredHalfWidth > halfWidth) {
+                halfWidth = requiredHalfWidth;
+            }
+        }
+
+        // Keep orthographic scaling isotropic so objects do not look squished.
+        const scale = halfWidth / baseHalfWidth;
+        const halfHeight = baseHalfHeight * scale;
+
+        this.camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
+        this.camera.orthoTop = halfHeight;
+        this.camera.orthoBottom = -halfHeight;
+        this.camera.orthoLeft = -halfWidth;
+        this.camera.orthoRight = halfWidth;
     }
 }
