@@ -4,7 +4,12 @@ import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { uid } from "../utils/MathUtils";
+
+// ── CC0 wood plank texture (Angry Birds classic: wood structures) ──
+const WOOD_TEXTURE_URL =
+    "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks/wood_planks_diff_1k.jpg";
 
 export interface ObstacleConfig {
     position: Vector3;
@@ -41,8 +46,19 @@ export class Obstacle {
         this.mesh.position.y = Math.max(this.mesh.position.y, size.y / 2);
 
         const mat = new StandardMaterial(`${this.id}_mat`, scene);
-        mat.diffuseColor = config.color ?? new Color3(0.72, 0.53, 0.24);
-        mat.specularColor = new Color3(0.15, 0.15, 0.15);
+
+        // Wood plank texture — tiles nicely on boxes of any size
+        const tex = new Texture(WOOD_TEXTURE_URL, scene);
+        // Scale UV based on the largest face dimension so planks look consistent
+        tex.uScale = Math.max(size.x, size.z) / 2;
+        tex.vScale = size.y / 2;
+        mat.diffuseTexture = tex;
+
+        // Warm wood tint
+        mat.diffuseColor = config.color ?? new Color3(0.95, 0.85, 0.7);
+        mat.specularColor = new Color3(0.1, 0.08, 0.05);
+        mat.specularPower = 8;
+
         this.mesh.material = mat;
     }
 
@@ -53,6 +69,14 @@ export class Obstacle {
             this.destroy();
             return true;
         }
+        // Darken slightly when damaged — shows wear
+        const mat = this.mesh.material as StandardMaterial;
+        const darken = 1 - (0.2 * (1 - this.health / 2));
+        mat.diffuseColor = new Color3(
+            0.95 * darken,
+            0.85 * darken,
+            0.7 * darken,
+        );
         return false;
     }
 
