@@ -23,6 +23,16 @@ The twist: you aim in a classic side-on 2D view, then the camera swoops into a *
 
 ---
 
+## Lighting / Shading Notes
+
+- Uses Babylon `StandardMaterial` (Phong/Blinn-Phong style shading pipeline).
+- Ambient component is explicit via scene ambient color + hemispheric fill light.
+- Diffuse component is explicit via per-material `diffuseColor` and light diffuse terms.
+- Specular component is explicit via per-material `specularColor` and `specularPower`.
+- Includes a directional light source (`sun`) plus a hemispheric ambient/fill light.
+
+---
+
 ## Controls
 
 | Input | Action |

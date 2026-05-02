@@ -41,9 +41,12 @@ export class Obstacle {
         this.mesh.position.y = Math.max(this.mesh.position.y, size.y / 2);
 
         const mat = new StandardMaterial(`${this.id}_mat`, scene);
+        mat.ambientColor = new Color3(0.16, 0.12, 0.06);
         mat.diffuseColor = config.color ?? new Color3(0.72, 0.53, 0.24);
         mat.specularColor = new Color3(0.15, 0.15, 0.15);
+        mat.specularPower = 48;
         this.mesh.material = mat;
+        this.mesh.receiveShadows = true;
     }
 
     hit(damage = 1): boolean {

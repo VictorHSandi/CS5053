@@ -2,6 +2,7 @@ import { Scene } from "@babylonjs/core/scene";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { InputController } from "./InputController";
@@ -46,6 +47,7 @@ export class LauncherSystem {
         const postMat = new StandardMaterial("postMat", scene);
         postMat.diffuseColor = new Color3(0.45, 0.28, 0.1);
         this._slingshotBase.material = postMat;
+        this._slingshotBase.receiveShadows = true;
 
         // Left fork
         const forkL = MeshBuilder.CreateCylinder("forkL", { height: 1, diameter: 0.12 }, scene);
@@ -53,6 +55,7 @@ export class LauncherSystem {
         forkL.position = new Vector3(-0.25, 1.1, 0);
         forkL.rotation.z = -0.45;
         forkL.material = postMat;
+        forkL.receiveShadows = true;
 
         // Right fork
         const forkR = MeshBuilder.CreateCylinder("forkR", { height: 1, diameter: 0.12 }, scene);
@@ -60,6 +63,7 @@ export class LauncherSystem {
         forkR.position = new Vector3(0.25, 1.1, 0);
         forkR.rotation.z = 0.45;
         forkR.material = postMat;
+        forkR.receiveShadows = true;
 
         // Elastic band (stretched line)
         this._band = MeshBuilder.CreateCylinder(
@@ -70,6 +74,7 @@ export class LauncherSystem {
         const bandMat = new StandardMaterial("bandMat", scene);
         bandMat.diffuseColor = new Color3(0.35, 0.18, 0.05);
         this._band.material = bandMat;
+        this._band.receiveShadows = true;
         this._band.isVisible = false;
 
         // Trajectory dots
@@ -138,6 +143,12 @@ export class LauncherSystem {
     /** The world-space launch point (top of slingshot). */
     get launchPoint(): Vector3 {
         return this.origin.add(new Vector3(0, 2.2, 0));
+    }
+
+    /** Register slingshot meshes as casters in the active shadow generator. */
+    registerShadowCasters(shadowGen: ShadowGenerator): void {
+        shadowGen.addShadowCaster(this._slingshotBase, true);
+        shadowGen.addShadowCaster(this._band);
     }
 
     // ── private helpers ───────────────────────────────────

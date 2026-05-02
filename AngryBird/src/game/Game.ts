@@ -83,12 +83,31 @@ export class Game {
         this._launcher.setVisible(true);
 
         this._projectile.spawn(this._launcher.launchPoint);
+        this._refreshShadowCasters();
         this._score.reset();
         this._evaluateDelay = 0;
 
         this._camera.setAimView(toVec3(def.launcherPosition));
         this._ui.hideOverlays();
         this._state.transition(GameState.Aiming);
+    }
+
+    /** Keep shadow caster list in sync with currently active level meshes. */
+    private _refreshShadowCasters(): void {
+        const shadowGen = this._sceneManager.shadowGenerator;
+        const shadowMap = shadowGen.getShadowMap();
+        if (shadowMap) {
+            shadowMap.renderList = [];
+        }
+
+        this._launcher.registerShadowCasters(shadowGen);
+        shadowGen.addShadowCaster(this._projectile.projectile.mesh);
+        for (const target of this._levels.targets) {
+            shadowGen.addShadowCaster(target.mesh);
+        }
+        for (const obstacle of this._levels.obstacles) {
+            shadowGen.addShadowCaster(obstacle.mesh);
+        }
     }
 
     private _restartLevel(): void {

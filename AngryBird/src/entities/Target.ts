@@ -47,9 +47,12 @@ export class Target {
         this.mesh.position.y = Math.max(this.mesh.position.y, size / 2);
 
         const mat = new StandardMaterial(`${this.id}_mat`, scene);
+        mat.ambientColor = new Color3(0.07, 0.18, 0.07);
         mat.diffuseColor = config.color ?? new Color3(0.2, 0.85, 0.2);
         mat.specularColor = new Color3(0.3, 0.3, 0.3);
+        mat.specularPower = 64;
         this.mesh.material = mat;
+        this.mesh.receiveShadows = true;
     }
 
     /** Apply damage. Returns true if the target was destroyed by this hit. */
