@@ -37,7 +37,7 @@ export class CameraController {
     constructor(scene: Scene) {
         this.camera = new FreeCamera("mainCam", new Vector3(0, CAM_AIM_HEIGHT, -CAM_AIM_DISTANCE), scene);
         this.camera.minZ = 0.1;
-        this.camera.maxZ = 500;
+        this.camera.maxZ = 10000;
         // We control the camera manually — detach default input
         this.camera.detachControl();
         scene.activeCamera = this.camera;

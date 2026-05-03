@@ -2,6 +2,7 @@ import { Scene } from "@babylonjs/core/scene";
 import { LevelDef, toVec3, toColor3 } from "./LevelData";
 import { Target } from "../entities/Target";
 import { Obstacle } from "../entities/Obstacle";
+import { setSkybox } from "../scenes/SceneSetup";
 import { LEVELS } from "./levels";
 
 /**
@@ -33,6 +34,9 @@ export class LevelManager {
         this.clearEntities();
         const def = this.currentDef;
 
+        // Swap skybox to match this level
+        setSkybox(scene, def.skybox);
+
         for (const td of def.targets) {
             this.targets.push(
                 new Target(scene, {
@@ -54,6 +58,7 @@ export class LevelManager {
                     color: toColor3(od.color),
                     destructible: od.destructible,
                     health: od.health,
+                    materialType: od.materialType, 
                 }),
             );
         }
