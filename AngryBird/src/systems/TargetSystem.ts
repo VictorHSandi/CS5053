@@ -14,6 +14,12 @@ import {
     BARREL_EXPLOSION_TARGET_IMPULSE,
     BARREL_EXPLOSION_VFX_DURATION,
     OBSTACLE_IMPULSE_MULT,
+    TITAN_CORE_OBSTACLE_DAMAGE_MULT,
+    TITAN_CORE_OBSTACLE_IMPULSE_MULT,
+    TITAN_CORE_SHOCKWAVE_OBSTACLE_DAMAGE,
+    TITAN_CORE_SHOCKWAVE_OBSTACLE_IMPULSE,
+    TITAN_CORE_SHOCKWAVE_RADIUS,
+    TITAN_CORE_TARGET_DAMAGE,
     TARGET_HIT_VELOCITY_MIN,
 } from "../utils/Constants";
 
@@ -21,6 +27,7 @@ export interface CollisionResult {
     targetsHit: Target[];
     obstaclesHit: Obstacle[];
     totalScore: number;
+    titanCoreConsumed: boolean;
 }
 
 interface ObstacleMotionState {
@@ -44,8 +51,14 @@ export class TargetSystem {
         projectile: Projectile,
         targets: Target[],
         obstacles: Obstacle[],
+        titanCoreCharged = false,
     ): CollisionResult {
-        const result: CollisionResult = { targetsHit: [], obstaclesHit: [], totalScore: 0 };
+        const result: CollisionResult = {
+            targetsHit: [],
+            obstaclesHit: [],
+            totalScore: 0,
+            titanCoreConsumed: false,
+        };
         const nowMs = Date.now();
         const activeObstacleIds = new Set<string>();
         const explodedBarrelIds = new Set<string>();
@@ -63,7 +76,13 @@ export class TargetSystem {
                 const tRad = (target.mesh.getBoundingInfo().boundingSphere?.radiusWorld) ?? 0.4;
                 const dist = Vector3.Distance(pPos, tPos);
                 if (dist < pRad + tRad && speed >= TARGET_HIT_VELOCITY_MIN) {
-                    const killed = target.hit();
+                    const useTitanCore = titanCoreCharged && !result.titanCoreConsumed;
+                    const hitDamage = useTitanCore ? TITAN_CORE_TARGET_DAMAGE : 1;
+                    if (useTitanCore) {
+                        result.titanCoreConsumed = true;
+                    }
+
+                    const killed = target.hit(hitDamage);
                     if (killed) {
                         this._registerTargetDestroyed(target, targets, obstacles, result, explodedBarrelIds);
                     }
@@ -128,17 +147,31 @@ export class TargetSystem {
                         .normalize();
 
                     const approachSpeed = Math.max(0, Vector3.Dot(projectile.velocity, contactNormal));
-                    const impulseMag = Math.min((approachSpeed + speed * 0.2) * OBSTACLE_IMPULSE_MULT, 22);
+                    const useTitanCore = titanCoreCharged && !result.titanCoreConsumed;
+                    let impulseMag = Math.min((approachSpeed + speed * 0.2) * OBSTACLE_IMPULSE_MULT, 22);
+                    if (useTitanCore) {
+                        const empoweredBase =
+                            (approachSpeed + speed * 0.65) * OBSTACLE_IMPULSE_MULT * TITAN_CORE_OBSTACLE_IMPULSE_MULT;
+                        impulseMag = Math.min(empoweredBase, 96);
+                        result.titanCoreConsumed = true;
+                    }
                     obs.applyImpulse(impulseDir.scale(impulseMag), closest);
 
                     // THEN apply damage
-                    const obstacleDamage = Math.min(Math.max(speed * 0.02, 0.1), 0.45);
+                    let obstacleDamage = Math.min(Math.max(speed * 0.02, 0.1), 0.45);
+                    if (useTitanCore) {
+                        obstacleDamage = Math.max(obstacleDamage * TITAN_CORE_OBSTACLE_DAMAGE_MULT, 1.4);
+                    }
                     const destroyed = obs.hit(obstacleDamage);
                     if (destroyed) {
                         this._registerObstacleDestroyed(obs, result);
                     }
 
-                    projectile.velocity = projectile.velocity.scale(0.35);
+                    if (useTitanCore) {
+                        this._applyTitanCoreShockwave(closest, obs, obstacles, result);
+                    }
+
+                    projectile.velocity = projectile.velocity.scale(useTitanCore ? 0.86 : 0.35);
                 }
             }
 
@@ -323,5 +356,40 @@ export class TargetSystem {
                 flash.dispose();
             }
         });
+    }
+
+    private _applyTitanCoreShockwave(
+        center: Vector3,
+        hitObstacle: Obstacle,
+        obstacles: Obstacle[],
+        result: CollisionResult,
+    ): void {
+        for (const obstacle of obstacles) {
+            if (obstacle.id === hitObstacle.id || obstacle.destroyed) continue;
+
+            const bb = obstacle.mesh.getBoundingInfo().boundingBox;
+            const closest = Vector3.Clamp(center, bb.minimumWorld, bb.maximumWorld);
+            const dist = Vector3.Distance(center, closest);
+            if (dist > TITAN_CORE_SHOCKWAVE_RADIUS) continue;
+
+            const falloff = Math.max(0, 1 - dist / TITAN_CORE_SHOCKWAVE_RADIUS);
+            if (falloff <= 0) continue;
+
+            const rawDir = obstacle.mesh.position.subtract(center);
+            const outwardDir = rawDir.lengthSquared() > 1e-8
+                ? rawDir.normalize()
+                : new Vector3(1, 0, 0);
+            const impulseDir = outwardDir
+                .add(new Vector3(0, 0.35 + 0.12 * falloff, 0))
+                .normalize();
+            const impulseMag = TITAN_CORE_SHOCKWAVE_OBSTACLE_IMPULSE * (0.35 + 0.65 * falloff);
+            obstacle.applyImpulse(impulseDir.scale(impulseMag), closest);
+
+            const damage = Math.max(0.12, TITAN_CORE_SHOCKWAVE_OBSTACLE_DAMAGE * falloff);
+            const destroyed = obstacle.hit(damage);
+            if (destroyed) {
+                this._registerObstacleDestroyed(obstacle, result);
+            }
+        }
     }
 }

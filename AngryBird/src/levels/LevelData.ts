@@ -27,6 +27,12 @@ export interface ObstacleDef {
     materialType?: "wood" | "stone";
 }
 
+export interface PowerupDef {
+    position: Vec3;
+    size?: number;
+    type?: "titanCore";
+}
+
 export type SkyboxType = "tropical" | "night";
 
 export interface LevelDef {
@@ -40,6 +46,7 @@ export interface LevelDef {
     launchDirection: Vec3;
     targets: TargetDef[];
     obstacles: ObstacleDef[];
+    powerups?: PowerupDef[];
     /** Max shots the player gets this level. */
     maxShots: number;
     /** Score thresholds for 1 / 2 / 3 stars. */

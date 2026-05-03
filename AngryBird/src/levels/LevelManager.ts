@@ -3,6 +3,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { LevelDef, toVec3, toColor3 } from "./LevelData";
 import { Target } from "../entities/Target";
 import { Obstacle } from "../entities/Obstacle";
+import { Powerup } from "../entities/Powerup";
 import { setSkybox } from "../scenes/SceneSetup";
 import { LEVELS } from "./levels";
 
@@ -13,6 +14,7 @@ export class LevelManager {
     private _currentIndex = 0;
     public targets: Target[] = [];
     public obstacles: Obstacle[] = [];
+    public powerups: Powerup[] = [];
 
     get currentDef(): LevelDef {
         return LEVELS[this._currentIndex];
@@ -66,6 +68,16 @@ export class LevelManager {
                     health: td.health,
                     scoreValue: td.scoreValue,
                     type: td.type,
+                }),
+            );
+        }
+
+        for (const pd of def.powerups ?? []) {
+            this.powerups.push(
+                new Powerup(scene, {
+                    position: toVec3(pd.position),
+                    size: pd.size,
+                    type: pd.type,
                 }),
             );
         }
@@ -125,8 +137,10 @@ export class LevelManager {
     clearEntities(): void {
         for (const t of this.targets) t.dispose();
         for (const o of this.obstacles) o.dispose();
+        for (const p of this.powerups) p.dispose();
         this.targets = [];
         this.obstacles = [];
+        this.powerups = [];
     }
 
     /** Number of objective targets still alive (barrels do not count). */

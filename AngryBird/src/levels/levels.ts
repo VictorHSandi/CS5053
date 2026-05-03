@@ -39,6 +39,9 @@ export const LEVELS: LevelDef[] = [
             { position: { x: 12, y: 2.5, z: 0 }, size: 0.8, health: 1, scoreValue: 150 },
             { position: { x: 14, y: 0.5, z: -2 }, size: 0.8, health: 2, scoreValue: 200 },
         ],
+        powerups: [
+            { position: { x: 10.5, y: 4.3, z: 0.2 }, size: 0.75, type: "titanCore" },
+        ],
         obstacles: [
             {
                 position: { x: 9, y: 0, z: 0 },

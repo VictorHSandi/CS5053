@@ -9,6 +9,7 @@ import { LauncherSystem } from "../systems/LauncherSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { FlightControlSystem } from "../systems/FlightControlSystem";
 import { TargetSystem } from "../systems/TargetSystem";
+import { PowerupSystem } from "../systems/PowerupSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
 import { GravitySystem } from "../systems/GravitySystem";
 import { LevelManager } from "../levels/LevelManager";
@@ -31,6 +32,7 @@ export class Game {
     private _projectile: ProjectileSystem;
     private _flight: FlightControlSystem;
     private _targets: TargetSystem;
+    private _powerups: PowerupSystem;
     private _score: ScoreSystem;
     private _gravity: GravitySystem;
 
@@ -42,6 +44,8 @@ export class Game {
 
     // Misc
     private _evaluateDelay = 0;
+    private _titanCoreReadyNextShot = false;
+    private _titanCoreActiveThisShot = false;
 
     constructor(canvas: HTMLCanvasElement) {
         this._sceneManager = new SceneManager(canvas);
@@ -56,6 +60,7 @@ export class Game {
         this._projectile = new ProjectileSystem(scene);
         this._flight = new FlightControlSystem();
         this._targets = new TargetSystem();
+        this._powerups = new PowerupSystem();
         this._score = new ScoreSystem();
         this._levels = new LevelManager();
         this._ui = new UIManager(scene);
@@ -82,6 +87,9 @@ export class Game {
         this._launcher.setVisible(true);
 
         this._projectile.spawn(this._launcher.launchPoint);
+        this._titanCoreReadyNextShot = false;
+        this._titanCoreActiveThisShot = false;
+        this._projectile.projectile.setTitanCoreCharged(false);
         this._refreshShadowCasters();
         this._score.reset();
         this._evaluateDelay = 0;
@@ -125,6 +133,11 @@ export class Game {
         for (const obstacle of this._levels.obstacles) {
             shadowGen.addShadowCaster(obstacle.mesh);
         }
+        for (const powerup of this._levels.powerups) {
+            if (!powerup.collected) {
+                shadowGen.addShadowCaster(powerup.mesh);
+            }
+        }
     }
 
     private _restartLevel(): void {
@@ -143,9 +156,13 @@ export class Game {
 
     private _onStateChange(next: GameState): void {
         switch (next) {
-            case GameState.Aiming:
-                this._ui.hud.setHint("Drag down to set power • Release to launch • G = toggle gravity");
+            case GameState.Aiming: {
+                const aimingHint = this._titanCoreReadyNextShot
+                    ? "Titan Core ready: this shot is empowered • Drag down to set power • Release to launch • G = toggle gravity"
+                    : "Drag down to set power • Release to launch • G = toggle gravity";
+                this._ui.hud.setHint(aimingHint);
                 break;
+            }
             case GameState.Flying:
                 this._ui.hud.setHint("WASD / Arrows = steer • Space = boost (once) • G = toggle gravity");
                 break;
@@ -180,6 +197,7 @@ export class Game {
         }
 
         this._gravity.update(this._input);
+        this._powerups.update(this._levels.powerups, dt);
 
         switch (state) {
             case GameState.Aiming:
@@ -212,8 +230,11 @@ export class Game {
         setSkyboxVisible(true);
 
         const vel = this._launcher.launchVelocity.clone();
+        this._titanCoreActiveThisShot = this._titanCoreReadyNextShot;
+        this._titanCoreReadyNextShot = false;
         this._score.recordShot();
         this._projectile.spawn(this._launcher.launchPoint);
+        this._projectile.projectile.setTitanCoreCharged(this._titanCoreActiveThisShot);
         this._projectile.launch(vel);
         this._refreshShadowCasters();
 
@@ -233,6 +254,7 @@ export class Game {
 
     private _updateLaunching(dt: number): void {
         this._projectile.update(dt, this._gravity.currentGravity);
+        this._updatePowerupCollections();
         const done = this._camera.update(dt, this._projectile.position, this._projectile.velocity);
         this._runCollisions();
         if (done) {
@@ -244,6 +266,7 @@ export class Game {
         this._flight.update(this._projectile.projectile, this._input, dt);
 
         const stillAlive = this._projectile.update(dt, this._gravity.currentGravity);
+        this._updatePowerupCollections();
         this._camera.update(dt, this._projectile.position, this._projectile.velocity);
         this._runCollisions();
 
@@ -271,7 +294,9 @@ export class Game {
 
     private _prepareNextShot(): void {
         const def = this._levels.currentDef;
+        this._titanCoreActiveThisShot = false;
         this._projectile.spawn(this._launcher.launchPoint);
+        this._projectile.projectile.setTitanCoreCharged(this._titanCoreReadyNextShot);
         this._refreshShadowCasters();
         this._launcher.configure(toVec3(def.launcherPosition), toVec3(def.launchDirection));
         this._launcher.setVisible(true);
@@ -285,9 +310,28 @@ export class Game {
             this._projectile.projectile,
             this._levels.targets,
             this._levels.obstacles,
+            this._titanCoreActiveThisShot,
         );
         if (result.totalScore > 0) {
             this._score.addScore(result.totalScore);
+        }
+
+        if (result.titanCoreConsumed) {
+            this._titanCoreActiveThisShot = false;
+            this._projectile.projectile.setTitanCoreCharged(false);
+            this._ui.hud.setHint("Titan Core activated: impact boosted.");
+        }
+    }
+
+    private _updatePowerupCollections(): void {
+        const collected = this._powerups.checkCollections(
+            this._projectile.projectile,
+            this._levels.powerups,
+        );
+
+        if (collected.titanCoreCollected > 0) {
+            this._titanCoreReadyNextShot = true;
+            this._ui.hud.setHint("Titan Core stored: next shot is empowered.");
         }
     }
 }

@@ -140,6 +140,8 @@ export class Projectile {
     public boostUsed = false;
 
     private readonly _config: Required<ProjectileConfig>;
+    private _mat: StandardMaterial;
+    private _titanCoreCharged = false;
 
     constructor(scene: Scene, config: ProjectileConfig = {}) {
         this._config = { ...DEFAULT_CONFIG, ...config } as Required<ProjectileConfig>;
@@ -150,11 +152,11 @@ export class Projectile {
             scene,
         );
 
-        const mat = new StandardMaterial("projectileMat", scene);
-        mat.diffuseTexture = createBirdTexture(scene);
-        mat.specularColor = new Color3(0.2, 0.2, 0.2);
-        mat.specularPower = 16;
-        this.mesh.material = mat;
+        this._mat = new StandardMaterial("projectileMat", scene);
+        this._mat.diffuseTexture = createBirdTexture(scene);
+        this._mat.specularColor = new Color3(0.2, 0.2, 0.2);
+        this._mat.specularPower = 16;
+        this.mesh.material = this._mat;
         this.mesh.receiveShadows = true;
         this.mesh.isVisible = false;
     }
@@ -189,6 +191,21 @@ export class Projectile {
     deactivate(): void {
         this.active = false;
         this.mesh.isVisible = false;
+    }
+
+    setTitanCoreCharged(charged: boolean): void {
+        if (this._titanCoreCharged === charged) return;
+        this._titanCoreCharged = charged;
+
+        if (charged) {
+            this._mat.emissiveColor = new Color3(0.95, 0.55, 0.1);
+            this._mat.specularPower = 26;
+            this.mesh.scaling.set(1.06, 1.06, 1.06);
+        } else {
+            this._mat.emissiveColor = new Color3(0, 0, 0);
+            this._mat.specularPower = 16;
+            this.mesh.scaling.set(1, 1, 1);
+        }
     }
 
     dispose(): void {
