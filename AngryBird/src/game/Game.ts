@@ -43,6 +43,7 @@ export class Game {
     constructor(canvas: HTMLCanvasElement) {
         // ── Bootstrap ──────────────────────────────────────
         this._sceneManager = new SceneManager(canvas);
+        (window as any).__scene = this._sceneManager.scene;
         const scene = this._sceneManager.scene;
 
         this._state = new GameStateManager();

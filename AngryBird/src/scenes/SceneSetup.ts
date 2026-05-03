@@ -6,25 +6,81 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-import { GROUND_SIZE, SKY_COLOR } from "../utils/Constants";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import { CubeTexture } from "@babylonjs/core/Materials/Textures/cubeTexture";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
 
-/**
- * Creates the shared 3D environment: ground, lights, sky.
- * Call once per scene.
- */
+import { GROUND_SIZE } from "../utils/Constants";
+import { SkyboxType } from "../levels/LevelData";
+
+const GRASS_TEXTURE_URL =
+  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rocky_terrain_02/rocky_terrain_02_diff_4k.jpg";
+
+const NORMAL_TEXTURE_URL =
+  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rocky_terrain_02/rocky_terrain_02_nor_gl_4k.jpg";
+
+let _skyboxMesh: Mesh | null = null;
+
+export function setSkybox(scene: Scene, type: SkyboxType): void {
+    if (_skyboxMesh) {
+        _skyboxMesh.material?.dispose();
+        _skyboxMesh.dispose();
+        _skyboxMesh = null;
+    }
+
+    const skybox = MeshBuilder.CreateBox("skyBox", { size: 10000 }, scene);
+
+    const mat = new StandardMaterial("skyBoxMat", scene);
+    mat.backFaceCulling = false;
+    mat.disableLighting = true;
+
+    if (type === "tropical") {
+        scene.clearColor = new Color4(0.53, 0.81, 0.98, 1);
+
+        const tex = new CubeTexture(
+            "https://assets.babylonjs.com/textures/TropicalSunnyDay",
+            scene
+        );
+
+        tex.coordinatesMode = Texture.SKYBOX_MODE;
+        mat.reflectionTexture = tex;
+    }
+
+    else if (type === "night") {
+        scene.clearColor = new Color4(0.01, 0.01, 0.05, 1);
+
+        const tex = new CubeTexture(
+            "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/cube/MilkyWay/",
+            scene,
+            ["dark-s_px.jpg", "dark-s_nx.jpg", "dark-s_py.jpg", "dark-s_ny.jpg", "dark-s_pz.jpg", "dark-s_nz.jpg"]
+        );
+
+        tex.coordinatesMode = Texture.SKYBOX_MODE;
+        mat.reflectionTexture = tex;
+    }
+
+    skybox.material = mat;
+    skybox.infiniteDistance = true;
+    _skyboxMesh = skybox;
+}
+
 export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerator } {
+<<<<<<< HEAD
     // Sky colour
     scene.clearColor = new Color4(SKY_COLOR.r, SKY_COLOR.g, SKY_COLOR.b, 1);
     // Explicit scene ambient term for grading clarity.
     scene.ambientColor = new Color3(0.18, 0.18, 0.18);
+=======
+    scene.clearColor = new Color4(0.53, 0.81, 0.98, 1);
+>>>>>>> Textures
 
-    // Ambient hemisphere light
     const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
     hemi.intensity = 0.55;
     hemi.diffuse = new Color3(0.95, 0.92, 0.88);
     hemi.specular = new Color3(0.12, 0.12, 0.12);
     hemi.groundColor = new Color3(0.35, 0.3, 0.25);
 
+<<<<<<< HEAD
     // Directional sun from launcher side (negative X) toward targets (positive X).
     // Moderate downward angle keeps object shadows readable while launcher base now contacts ground.
     const sun = new DirectionalLight("sun", new Vector3(1, -1.1, -0.45).normalize(), scene);
@@ -32,19 +88,46 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     sun.diffuse = new Color3(1, 0.96, 0.9);
     sun.specular = new Color3(0.95, 0.95, 0.95);
     sun.position = new Vector3(-90, 36, 0);
+=======
+    const sun = new DirectionalLight(
+        "sun",
+        new Vector3(-1, -2, 1).normalize(),
+        scene
+    );
 
-    // Shadows
+    sun.intensity = 0.75;
+    sun.diffuse = new Color3(1, 0.75, 0.55);
+    sun.position = new Vector3(20, 40, -20);
+>>>>>>> Textures
+
     const shadowGen = new ShadowGenerator(1024, sun);
     shadowGen.useBlurExponentialShadowMap = true;
     shadowGen.blurKernel = 16;
 
-    // Ground
-    const ground = MeshBuilder.CreateGround("ground", { width: GROUND_SIZE, height: GROUND_SIZE }, scene);
+    const ground = MeshBuilder.CreateGround(
+        "ground",
+        { width: GROUND_SIZE, height: GROUND_SIZE, subdivisions: 500 },
+        scene
+    );
+
     const groundMat = new StandardMaterial("groundMat", scene);
+<<<<<<< HEAD
     groundMat.ambientColor = new Color3(0.16, 0.2, 0.12);
     groundMat.diffuseColor = new Color3(0.42, 0.65, 0.28);
     groundMat.specularColor = new Color3(0.05, 0.05, 0.05);
     groundMat.specularPower = 32;
+=======
+
+    const grassTex = new Texture(GRASS_TEXTURE_URL, scene);
+    grassTex.uScale = GROUND_SIZE / 20;
+    grassTex.vScale = GROUND_SIZE / 20;
+
+    groundMat.diffuseTexture = grassTex;
+    groundMat.bumpTexture = new Texture(NORMAL_TEXTURE_URL, scene);
+    groundMat.specularColor = new Color3(0.05, 0.05, 0.05);
+    groundMat.specularPower = 0;
+
+>>>>>>> Textures
     ground.material = groundMat;
     ground.receiveShadows = true;
 

@@ -24,11 +24,16 @@ export interface ObstacleDef {
     color?: { r: number; g: number; b: number };
     destructible?: boolean;
     health?: number;
+    materialType?: "wood" | "stone";
 }
+
+export type SkyboxType = "tropical" | "night";
 
 export interface LevelDef {
     id: string;
     name: string;
+    /** Which skybox to display for this level. */
+    skybox: SkyboxType;
     /** Launcher world position (the slingshot). */
     launcherPosition: Vec3;
     /** Default launch direction (unit-ish vector). */
