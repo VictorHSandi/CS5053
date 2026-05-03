@@ -4,10 +4,10 @@
 
 // ── Physics ──────────────────────────────────────────────
 export const GRAVITY = -9.81;
-export const OBSTACLE_MASS        = 30.0;   // kg — heavier = harder to knock over
+export const OBSTACLE_MASS        = 35.0;   // kg base — per-material scaling is applied in Obstacle
 export const OBSTACLE_RESTITUTION = 0.01;   // bounciness (0 = dead stop, 1 = full bounce)
-export const OBSTACLE_FRICTION    = 0.9;   // surface grip
-export const OBSTACLE_IMPULSE_MULT = 0.1; // projectile speed → impulse strength
+export const OBSTACLE_FRICTION    = 0.55;   // lower grip helps blocks tip instead of sticking in place
+export const OBSTACLE_IMPULSE_MULT = 0.85; // projectile speed → impulse strength
 
 // ── Launcher / Aiming ────────────────────────────────────
 export const LAUNCHER_MAX_PULL = 3.0; // max drag distance in world units
@@ -29,6 +29,11 @@ export const FLIGHT_MAX_NUDGES = 6; // legacy value, unused with continuous cont
 // ── Targets ──────────────────────────────────────────────
 export const TARGET_BASE_SCORE = 100;
 export const TARGET_HIT_VELOCITY_MIN = 2.0; // min impact speed to register
+export const TARGET_MASS = 8.0;
+export const TARGET_RESTITUTION = 0.02;
+export const TARGET_FRICTION = 0.75;
+export const TARGET_LINEAR_DAMPING = 0.2;
+export const TARGET_ANGULAR_DAMPING = 0.3;
 
 // ── Scoring / Stars ──────────────────────────────────────
 export const DEFAULT_STAR_THRESHOLDS = [100, 250, 400];

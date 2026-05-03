@@ -5,7 +5,17 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { PhysicsAggregate } from "@babylonjs/core/Physics/v2/physicsAggregate";
+import { PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
+
 import { uid } from "../utils/MathUtils";
+import {
+    TARGET_ANGULAR_DAMPING,
+    TARGET_FRICTION,
+    TARGET_LINEAR_DAMPING,
+    TARGET_MASS,
+    TARGET_RESTITUTION,
+} from "../utils/Constants";
 
 export interface TargetConfig {
     position: Vector3;
@@ -132,6 +142,7 @@ export class Target {
     public readonly type: string;
 
     private _mat: StandardMaterial;
+    private _physicsAggregate: PhysicsAggregate | null = null;
 
     constructor(scene: Scene, config: TargetConfig) {
         this.id = uid("target");
@@ -154,6 +165,20 @@ export class Target {
         this._mat.specularColor = new Color3(0.2, 0.3, 0.2);
         this._mat.specularPower = 16;
         this.mesh.material = this._mat;
+
+        this._physicsAggregate = new PhysicsAggregate(
+            this.mesh,
+            PhysicsShapeType.SPHERE,
+            {
+                mass: TARGET_MASS,
+                restitution: TARGET_RESTITUTION,
+                friction: TARGET_FRICTION,
+            },
+            scene,
+        );
+        this._physicsAggregate.body.disablePreStep = false;
+        (this._physicsAggregate.body as any).setLinearDamping?.(TARGET_LINEAR_DAMPING);
+        (this._physicsAggregate.body as any).setAngularDamping?.(TARGET_ANGULAR_DAMPING);
     }
 
     hit(damage = 1): boolean {
@@ -172,11 +197,22 @@ export class Target {
     }
 
     destroy(): void {
+        if (this.destroyed) return;
         this.destroyed = true;
+
+        if (this._physicsAggregate) {
+            this._physicsAggregate.dispose();
+            this._physicsAggregate = null;
+        }
+
         this.mesh.isVisible = false;
     }
 
     dispose(): void {
+        if (this._physicsAggregate) {
+            this._physicsAggregate.dispose();
+            this._physicsAggregate = null;
+        }
         this.mesh.dispose();
     }
 }

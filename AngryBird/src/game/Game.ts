@@ -253,6 +253,9 @@ export class Game {
     }
 
     private _updateEvaluating(dt: number): void {
+        // Allow structural collapses to keep affecting targets after projectile stops.
+        this._runCollisions();
+
         this._evaluateDelay += dt;
         if (this._evaluateDelay < 0.8) return;
         this._evaluateDelay = 0;

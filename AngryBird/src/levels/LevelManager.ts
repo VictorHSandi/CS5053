@@ -1,4 +1,5 @@
 import { Scene } from "@babylonjs/core/scene";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { LevelDef, toVec3, toColor3 } from "./LevelData";
 import { Target } from "../entities/Target";
 import { Obstacle } from "../entities/Obstacle";
@@ -37,19 +38,6 @@ export class LevelManager {
         // Swap skybox to match this level
         setSkybox(scene, def.skybox);
 
-        for (const td of def.targets) {
-            this.targets.push(
-                new Target(scene, {
-                    position: toVec3(td.position),
-                    size: td.size,
-                    color: toColor3(td.color),
-                    health: td.health,
-                    scoreValue: td.scoreValue,
-                    type: td.type,
-                }),
-            );
-        }
-
         for (const od of def.obstacles) {
             this.obstacles.push(
                 new Obstacle(scene, {
@@ -62,6 +50,63 @@ export class LevelManager {
                 }),
             );
         }
+
+        for (const td of def.targets) {
+            const targetSize = td.size ?? 0.8;
+            const resolvedPosition = this._resolveTargetSpawn(
+                toVec3(td.position),
+                targetSize,
+            );
+
+            this.targets.push(
+                new Target(scene, {
+                    position: resolvedPosition,
+                    size: td.size,
+                    color: toColor3(td.color),
+                    health: td.health,
+                    scoreValue: td.scoreValue,
+                    type: td.type,
+                }),
+            );
+        }
+    }
+
+    /** Move target spawns out of any obstacle volume to avoid initial overlap. */
+    private _resolveTargetSpawn(position: Vector3, diameter: number): Vector3 {
+        const radius = diameter * 0.5;
+        const resolved = position.clone();
+        resolved.y = Math.max(resolved.y, radius);
+
+        for (let iter = 0; iter < 8; iter++) {
+            let moved = false;
+
+            for (const obstacle of this.obstacles) {
+                if (obstacle.destroyed) continue;
+
+                obstacle.mesh.computeWorldMatrix(true);
+                const bb = obstacle.mesh.getBoundingInfo().boundingBox;
+                const closest = Vector3.Clamp(resolved, bb.minimumWorld, bb.maximumWorld);
+                const offset = resolved.subtract(closest);
+                const dist = offset.length();
+
+                if (dist >= radius) continue;
+
+                moved = true;
+                if (dist > 1e-5) {
+                    const pushDir = offset.scale(1 / dist);
+                    const pushAmount = (radius - dist) + 0.04;
+                    resolved.addInPlace(pushDir.scale(pushAmount));
+                } else {
+                    resolved.y = bb.maximumWorld.y + radius + 0.06;
+                }
+
+                resolved.y = Math.max(resolved.y, radius);
+            }
+
+            if (!moved) break;
+        }
+
+        return resolved;
     }
 
     /** Advance to the next level. Returns false if there's no next level. */

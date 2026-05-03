@@ -46,6 +46,7 @@ export class Obstacle {
 
     private _physicsAggregate: PhysicsAggregate | null = null;
     private _lastHitTime = 0;
+    private _lastImpulseTime = 0;
 
     constructor(scene: Scene, config: ObstacleConfig) {
         this.id = uid("obstacle");
@@ -102,17 +103,22 @@ export class Obstacle {
         this.mesh.material = mat;
         this.mesh.receiveShadows = true;
 
+        const massScale = materialType === "stone" ? 1.35 : 0.75;
+
         this._physicsAggregate = new PhysicsAggregate(
             this.mesh,
             PhysicsShapeType.BOX,
             {
-                mass: OBSTACLE_MASS,
+                mass: OBSTACLE_MASS * massScale,
                 restitution: OBSTACLE_RESTITUTION,
                 friction: OBSTACLE_FRICTION,
             },
             scene,
         );
         this._physicsAggregate.body.disablePreStep = false;
+        // Slight damping keeps motion plausible while still allowing topples.
+        (this._physicsAggregate.body as any).setLinearDamping?.(0.08);
+        (this._physicsAggregate.body as any).setAngularDamping?.(0.12);
     }
 
     hit(damage = 1): boolean {
@@ -154,11 +160,18 @@ export class Obstacle {
     applyImpulse(impulse: Vector3, contactPoint: Vector3): void {
         if (this.destroyed || !this._physicsAggregate) return;
 
+        const now = Date.now();
+        if (now - this._lastImpulseTime < 60) return;
+        this._lastImpulseTime = now;
+
         const physicsEngine = this.mesh.getScene().getPhysicsEngine() as any;
         const plugin = physicsEngine?._physicsPlugin;
-        const body = this._physicsAggregate.body as any;
-        const bodyId = body?._pluginData?.hpBodyId;
+        const bodyAny = this._physicsAggregate.body as any;
+        const bodyId = bodyAny?._pluginData?.hpBodyId;
         if (!plugin || !bodyId) return;
+
+        // Wake body before impulse so sleeping blocks react immediately.
+        plugin._hknp.HP_Body_SetActivationState(bodyId, 1);
 
         plugin._hknp.HP_Body_ApplyImpulse(
             bodyId,
