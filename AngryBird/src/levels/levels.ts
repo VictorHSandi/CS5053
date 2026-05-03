@@ -12,6 +12,7 @@ export const LEVELS: LevelDef[] = [
         timeBonusThreshold: 30,
         targets: [
             { position: { x: 10, y: 0.5, z: 0 }, size: 0.9, health: 1, scoreValue: 100 },
+            { position: { x: 12, y: 0.6, z: 0.3 }, size: 1, health: 1, scoreValue: 75, type: "barrel" },
             { position: { x: 14, y: 0.5, z: 1 }, size: 0.9, health: 1, scoreValue: 100 },
         ],
         obstacles: [
@@ -82,6 +83,7 @@ export const LEVELS: LevelDef[] = [
             { position: { x: 8, y: 0.5, z: 4 }, size: 0.8, health: 1, scoreValue: 100 },
             { position: { x: 12, y: 0.5, z: -3 }, size: 0.8, health: 1, scoreValue: 100 },
             { position: { x: 16, y: 0.5, z: 1 }, size: 0.8, health: 1, scoreValue: 150 },
+            { position: { x: 20, y: 0.6, z: 0 }, size: 1, health: 1, scoreValue: 75, type: "barrel" },
             { position: { x: 20, y: 3, z: 0 }, size: 1, health: 2, scoreValue: 250 },
         ],
         obstacles: [

@@ -34,6 +34,13 @@ export const TARGET_RESTITUTION = 0.02;
 export const TARGET_FRICTION = 0.75;
 export const TARGET_LINEAR_DAMPING = 0.2;
 export const TARGET_ANGULAR_DAMPING = 0.3;
+export const BARREL_MASS = 10.0;
+export const BARREL_EXPLOSION_RADIUS = 4.2;
+export const BARREL_EXPLOSION_TARGET_DAMAGE = 2.2;
+export const BARREL_EXPLOSION_TARGET_IMPULSE = 11.5;
+export const BARREL_EXPLOSION_OBSTACLE_DAMAGE = 1.35;
+export const BARREL_EXPLOSION_OBSTACLE_IMPULSE = 16.0;
+export const BARREL_EXPLOSION_VFX_DURATION = 0.26;
 
 // ── Scoring / Stars ──────────────────────────────────────
 export const DEFAULT_STAR_THRESHOLDS = [100, 250, 400];

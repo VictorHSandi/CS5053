@@ -160,7 +160,7 @@ export class Game {
 
     private _showWin(): void {
         const def = this._levels.currentDef;
-        const totalTargets = def.targets.length;
+        const totalTargets = def.targets.filter((t) => (t.type ?? "pig") !== "barrel").length;
         const breakdown = this._score.finalise(def, totalTargets);
         this._ui.showWin(breakdown, this._levels.hasNextLevel);
     }

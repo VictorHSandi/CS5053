@@ -10,6 +10,7 @@ import { PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugi
 
 import { uid } from "../utils/MathUtils";
 import {
+    BARREL_MASS,
     TARGET_ANGULAR_DAMPING,
     TARGET_FRICTION,
     TARGET_LINEAR_DAMPING,
@@ -23,7 +24,7 @@ export interface TargetConfig {
     color?: Color3;
     health?: number;
     scoreValue?: number;
-    type?: string;
+    type?: "pig" | "barrel";
 }
 
 /**
@@ -129,6 +130,51 @@ function createPigTexture(scene: Scene, id: string): DynamicTexture {
     return tex;
 }
 
+function createBarrelTexture(scene: Scene, id: string): DynamicTexture {
+    const size = 256;
+    const tex = new DynamicTexture(`barrelTex_${id}`, { width: size, height: size }, scene, false);
+    const ctx = tex.getContext() as CanvasRenderingContext2D;
+
+    ctx.clearRect(0, 0, size, size);
+
+    // Main body
+    ctx.fillStyle = "#8b4f2d";
+    ctx.fillRect(0, 0, size, size);
+
+    // Metal hoops
+    ctx.fillStyle = "#2a2a2a";
+    ctx.fillRect(0, 16, size, 26);
+    ctx.fillRect(0, 106, size, 30);
+    ctx.fillRect(0, 214, size, 26);
+
+    // Warning stripe band
+    ctx.fillStyle = "#f0c433";
+    ctx.fillRect(0, 144, size, 56);
+
+    // Diagonal hazard lines
+    ctx.strokeStyle = "#222222";
+    ctx.lineWidth = 10;
+    for (let x = -40; x < size + 40; x += 34) {
+        ctx.beginPath();
+        ctx.moveTo(x, 144);
+        ctx.lineTo(x + 56, 200);
+        ctx.stroke();
+    }
+
+    // Subtle wood grain lines
+    ctx.strokeStyle = "rgba(55,30,16,0.35)";
+    ctx.lineWidth = 2;
+    for (let y = 8; y < size; y += 22) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(size, y + 6);
+        ctx.stroke();
+    }
+
+    tex.update();
+    return tex;
+}
+
 /**
  * A destructible target entity ("pig").
  */
@@ -139,7 +185,7 @@ export class Target {
     public maxHealth: number;
     public scoreValue: number;
     public destroyed = false;
-    public readonly type: string;
+    public readonly type: "pig" | "barrel";
 
     private _mat: StandardMaterial;
     private _physicsAggregate: PhysicsAggregate | null = null;
@@ -152,25 +198,54 @@ export class Target {
         this.scoreValue = config.scoreValue ?? 100;
         this.type = config.type ?? "pig";
 
-        this.mesh = MeshBuilder.CreateSphere(
-            this.id,
-            { diameter: size, segments: 16 },
-            scene,
-        );
-        this.mesh.position = config.position.clone();
-        this.mesh.position.y = Math.max(this.mesh.position.y, size / 2);
+        if (this.type === "barrel") {
+            const barrelHeight = size * 1.2;
+            const barrelDiameter = size * 0.72;
+            this.mesh = MeshBuilder.CreateCylinder(
+                this.id,
+                {
+                    height: barrelHeight,
+                    diameter: barrelDiameter,
+                    tessellation: 20,
+                },
+                scene,
+            );
+            this.mesh.position = config.position.clone();
+            this.mesh.position.y = Math.max(this.mesh.position.y, barrelHeight * 0.5);
+        } else {
+            this.mesh = MeshBuilder.CreateSphere(
+                this.id,
+                { diameter: size, segments: 16 },
+                scene,
+            );
+            this.mesh.position = config.position.clone();
+            this.mesh.position.y = Math.max(this.mesh.position.y, size / 2);
+        }
 
         this._mat = new StandardMaterial(`${this.id}_mat`, scene);
-        this._mat.diffuseTexture = createPigTexture(scene, this.id);
-        this._mat.specularColor = new Color3(0.2, 0.3, 0.2);
-        this._mat.specularPower = 16;
+        if (this.type === "barrel") {
+            this._mat.diffuseTexture = createBarrelTexture(scene, this.id);
+            this._mat.specularColor = new Color3(0.12, 0.12, 0.12);
+            this._mat.specularPower = 12;
+        } else {
+            this._mat.diffuseTexture = createPigTexture(scene, this.id);
+            this._mat.specularColor = new Color3(0.2, 0.3, 0.2);
+            this._mat.specularPower = 16;
+        }
         this.mesh.material = this._mat;
+
+        const physicsShape = this.type === "barrel"
+            ? PhysicsShapeType.BOX
+            : PhysicsShapeType.SPHERE;
+        const physicsMass = this.type === "barrel"
+            ? BARREL_MASS
+            : TARGET_MASS;
 
         this._physicsAggregate = new PhysicsAggregate(
             this.mesh,
-            PhysicsShapeType.SPHERE,
+            physicsShape,
             {
-                mass: TARGET_MASS,
+                mass: physicsMass,
                 restitution: TARGET_RESTITUTION,
                 friction: TARGET_FRICTION,
             },
@@ -189,11 +264,37 @@ export class Target {
             return true;
         }
         // Flash: tint the diffuse color red briefly, then restore
-        this._mat.diffuseColor = new Color3(1.5, 0.4, 0.4);
+        this._mat.diffuseColor = this.type === "barrel"
+            ? new Color3(1.6, 1.1, 0.35)
+            : new Color3(1.5, 0.4, 0.4);
         setTimeout(() => {
             if (!this.destroyed) this._mat.diffuseColor = new Color3(1, 1, 1);
         }, 120);
         return false;
+    }
+
+    get isObjective(): boolean {
+        return this.type !== "barrel";
+    }
+
+    /** Apply a physics impulse at a world-space contact point. */
+    applyImpulse(impulse: Vector3, contactPoint?: Vector3): void {
+        if (this.destroyed || !this._physicsAggregate) return;
+
+        const physicsEngine = this.mesh.getScene().getPhysicsEngine() as any;
+        const plugin = physicsEngine?._physicsPlugin;
+        const bodyAny = this._physicsAggregate.body as any;
+        const bodyId = bodyAny?._pluginData?.hpBodyId;
+        if (!plugin || !bodyId) return;
+
+        plugin._hknp.HP_Body_SetActivationState(bodyId, 1);
+
+        const point = contactPoint ?? this.mesh.position;
+        plugin._hknp.HP_Body_ApplyImpulse(
+            bodyId,
+            [impulse.x, impulse.y, impulse.z],
+            [point.x, point.y, point.z],
+        );
     }
 
     destroy(): void {

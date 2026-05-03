@@ -15,7 +15,7 @@ export interface TargetDef {
     color?: { r: number; g: number; b: number };
     health?: number;
     scoreValue?: number;
-    type?: string;
+    type?: "pig" | "barrel";
 }
 
 export interface ObstacleDef {

@@ -129,9 +129,9 @@ export class LevelManager {
         this.obstacles = [];
     }
 
-    /** Number of targets still alive. */
+    /** Number of objective targets still alive (barrels do not count). */
     get aliveTargetCount(): number {
-        return this.targets.filter((t) => !t.destroyed).length;
+        return this.targets.filter((t) => !t.destroyed && t.isObjective).length;
     }
 
     dispose(): void {
