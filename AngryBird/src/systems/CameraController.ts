@@ -139,9 +139,29 @@ export class CameraController {
         const scale = halfWidth / baseHalfWidth;
         const halfHeight = baseHalfHeight * scale;
 
+        // Keep the bottom of the orthographic window above ground so hiding the
+        // skybox does not reveal a black strip at the bottom of the screen.
+        const look = this.camera.getTarget();
+        const forward = look.subtract(this.camera.position).normalize();
+        let right = Vector3.Cross(forward, Vector3.Up());
+        if (right.lengthSquared() < 1e-6) {
+            right = Vector3.Right();
+        } else {
+            right.normalize();
+        }
+        const up = Vector3.Cross(right, forward).normalize();
+
+        const minBottomOriginY = 0.35;
+        const symmetricBottom = -halfHeight;
+        const bottomOriginY = this.camera.position.y + up.y * symmetricBottom;
+        let orthoOffset = 0;
+        if (up.y > 1e-4 && bottomOriginY < minBottomOriginY) {
+            orthoOffset = (minBottomOriginY - bottomOriginY) / up.y;
+        }
+
         this.camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
-        this.camera.orthoTop = halfHeight;
-        this.camera.orthoBottom = -halfHeight;
+        this.camera.orthoTop = halfHeight + orthoOffset;
+        this.camera.orthoBottom = -halfHeight + orthoOffset;
         this.camera.orthoLeft = -halfWidth;
         this.camera.orthoRight = halfWidth;
     }

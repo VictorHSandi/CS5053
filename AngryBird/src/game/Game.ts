@@ -12,6 +12,7 @@ import { ScoreSystem, ScoreBreakdown } from "../systems/ScoreSystem";
 import { LevelManager } from "../levels/LevelManager";
 import { LevelDef, toVec3 } from "../levels/LevelData";
 import { UIManager } from "../ui/UIManager";
+import { setSkyboxVisible } from "../scenes/SceneSetup";
 
 /**
  * Top-level game controller.
@@ -89,6 +90,7 @@ export class Game {
         this._evaluateDelay = 0;
 
         this._camera.setAimView(toVec3(def.launcherPosition), this._computeAimMaxX(def));
+        setSkyboxVisible(false);
         this._ui.hideOverlays();
         this._state.transition(GameState.Aiming);
     }
@@ -224,6 +226,8 @@ export class Game {
     }
 
     private _doLaunch(): void {
+        setSkyboxVisible(true);
+
         const vel = this._launcher.launchVelocity.clone();
         this._score.recordShot();
         this._projectile.spawn(this._launcher.launchPoint);
@@ -297,6 +301,7 @@ export class Game {
         this._launcher.configure(toVec3(def.launcherPosition), toVec3(def.launchDirection));
         this._launcher.setVisible(true);
         this._camera.setAimView(toVec3(def.launcherPosition), this._computeAimMaxX(def));
+        setSkyboxVisible(false);
         this._state.transition(GameState.Aiming);
     }
 

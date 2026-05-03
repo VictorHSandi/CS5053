@@ -40,6 +40,7 @@ export const CAM_FOLLOW_HEIGHT = 1.2;
 export const CAM_TRANSITION_DURATION = 0.6; // seconds
 
 // ── World ────────────────────────────────────────────────
-export const GROUND_SIZE = 200;
+// Large enough that the floor boundary stays outside all camera views.
+export const GROUND_SIZE = 4000;
 export const GROUND_Y = 0;
 export const SKY_COLOR = { r: 0.25, g: 0.12, b: 0.11 };

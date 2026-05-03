@@ -21,6 +21,38 @@ const NORMAL_TEXTURE_URL =
 
 let _skyboxMesh: Mesh | null = null;
 
+function applyLightingPreset(scene: Scene, type: SkyboxType): void {
+    const hemi = scene.getLightByName("hemi") as HemisphericLight | null;
+    const sun = scene.getLightByName("sun") as DirectionalLight | null;
+
+    if (!hemi || !sun) return;
+
+    if (type === "night") {
+        hemi.intensity = 0.1;
+        hemi.diffuse = new Color3(0.2, 0.24, 0.34);
+        hemi.specular = new Color3(0.04, 0.05, 0.08);
+        hemi.groundColor = new Color3(0.03, 0.03, 0.05);
+
+        sun.intensity = 0.65;
+        sun.diffuse = new Color3(0.7, 0.8, 1);
+        sun.specular = new Color3(0.5, 0.58, 0.75);
+        sun.direction = new Vector3(0.35, -1, -0.25).normalize();
+        sun.position = new Vector3(-18, 42, 18);
+        return;
+    }
+
+    hemi.intensity = 0.55;
+    hemi.diffuse = new Color3(0.95, 0.92, 0.88);
+    hemi.specular = new Color3(0.12, 0.12, 0.12);
+    hemi.groundColor = new Color3(0.35, 0.3, 0.25);
+
+    sun.intensity = 0.75;
+    sun.diffuse = new Color3(1, 0.75, 0.55);
+    sun.specular = new Color3(1, 0.85, 0.65);
+    sun.direction = new Vector3(-1, -2, 1).normalize();
+    sun.position = new Vector3(20, 40, -20);
+}
+
 export function setSkybox(scene: Scene, type: SkyboxType): void {
     if (_skyboxMesh) {
         _skyboxMesh.material?.dispose();
@@ -59,9 +91,16 @@ export function setSkybox(scene: Scene, type: SkyboxType): void {
         mat.reflectionTexture = tex;
     }
 
+    applyLightingPreset(scene, type);
+
     skybox.material = mat;
     skybox.infiniteDistance = true;
     _skyboxMesh = skybox;
+}
+
+export function setSkyboxVisible(visible: boolean): void {
+    if (!_skyboxMesh) return;
+    _skyboxMesh.setEnabled(visible);
 }
 
 export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerator } {
