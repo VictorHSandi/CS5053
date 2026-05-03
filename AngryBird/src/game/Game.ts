@@ -1,18 +1,19 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import { SceneManager } from "../scenes/SceneManager";
+import { setSkyboxVisible } from "../scenes/SceneSetup";
 import { GameStateManager, GameState } from "./GameStateManager";
 import { InputController } from "../systems/InputController";
-import { CameraController, CameraMode } from "../systems/CameraController";
+import { CameraController } from "../systems/CameraController";
 import { LauncherSystem } from "../systems/LauncherSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { FlightControlSystem } from "../systems/FlightControlSystem";
 import { TargetSystem } from "../systems/TargetSystem";
-import { ScoreSystem, ScoreBreakdown } from "../systems/ScoreSystem";
+import { ScoreSystem } from "../systems/ScoreSystem";
+import { GravitySystem } from "../systems/GravitySystem";
 import { LevelManager } from "../levels/LevelManager";
 import { LevelDef, toVec3 } from "../levels/LevelData";
 import { UIManager } from "../ui/UIManager";
-import { setSkyboxVisible } from "../scenes/SceneSetup";
 
 /**
  * Top-level game controller.
@@ -31,6 +32,7 @@ export class Game {
     private _flight: FlightControlSystem;
     private _targets: TargetSystem;
     private _score: ScoreSystem;
+    private _gravity: GravitySystem;
 
     // Data
     private _levels: LevelManager;
@@ -42,7 +44,6 @@ export class Game {
     private _evaluateDelay = 0;
 
     constructor(canvas: HTMLCanvasElement) {
-        // ── Bootstrap ──────────────────────────────────────
         this._sceneManager = new SceneManager(canvas);
         (window as any).__scene = this._sceneManager.scene;
         const scene = this._sceneManager.scene;
@@ -58,23 +59,19 @@ export class Game {
         this._score = new ScoreSystem();
         this._levels = new LevelManager();
         this._ui = new UIManager(scene);
+        this._gravity = new GravitySystem(scene, this._ui.hud);
 
-        // Wire UI callbacks
         this._ui.winScreen.onNext = () => this._advanceLevel();
         this._ui.winScreen.onRetry = () => this._restartLevel();
         this._ui.loseScreen.onRetry = () => this._restartLevel();
 
-        // State-change listener
         this._state.onChange((_prev, next) => this._onStateChange(next));
 
-        // Load first level and start
-        this._loadLevel();
-        this._sceneManager.run((dt) => this._update(dt));
+        this._sceneManager.ready.then(() => {
+            this._loadLevel();
+            this._sceneManager.run((dt) => this._update(dt));
+        });
     }
-
-    // ══════════════════════════════════════════════════════
-    //  LEVEL LIFECYCLE
-    // ══════════════════════════════════════════════════════
 
     private _loadLevel(): void {
         const scene = this._sceneManager.scene;
@@ -95,7 +92,6 @@ export class Game {
         this._state.transition(GameState.Aiming);
     }
 
-    /** Rightmost X bound used for adaptive 2D aiming camera framing. */
     private _computeAimMaxX(def: LevelDef): number {
         let maxX = def.launcherPosition.x;
 
@@ -112,7 +108,6 @@ export class Game {
         return maxX;
     }
 
-    /** Keep shadow caster list in sync with currently active level meshes. */
     private _refreshShadowCasters(): void {
         const shadowGen = this._sceneManager.shadowGenerator;
         const shadowMap = shadowGen.getShadowMap();
@@ -146,17 +141,13 @@ export class Game {
         }
     }
 
-    // ══════════════════════════════════════════════════════
-    //  STATE TRANSITIONS
-    // ══════════════════════════════════════════════════════
-
     private _onStateChange(next: GameState): void {
         switch (next) {
             case GameState.Aiming:
-                this._ui.hud.setHint("Drag down to set power • Release to launch");
+                this._ui.hud.setHint("Drag down to set power • Release to launch • G = toggle gravity");
                 break;
             case GameState.Flying:
-                this._ui.hud.setHint("WASD / Arrows = steer • Space = boost (once)");
+                this._ui.hud.setHint("WASD / Arrows = steer • Space = boost (once) • G = toggle gravity");
                 break;
             case GameState.Won:
                 this._showWin();
@@ -174,15 +165,10 @@ export class Game {
         this._ui.showWin(breakdown, this._levels.hasNextLevel);
     }
 
-    // ══════════════════════════════════════════════════════
-    //  MAIN UPDATE LOOP
-    // ══════════════════════════════════════════════════════
-
     private _update(dt: number): void {
         const state = this._state.state;
         const def = this._levels.currentDef;
 
-        // HUD (always refreshed except on overlays)
         if (state !== GameState.Won && state !== GameState.Lost) {
             this._ui.updateHUD(
                 def.name,
@@ -192,6 +178,8 @@ export class Game {
                 this._levels.aliveTargetCount,
             );
         }
+
+        this._gravity.update(this._input);
 
         switch (state) {
             case GameState.Aiming:
@@ -206,23 +194,18 @@ export class Game {
             case GameState.Evaluating:
                 this._updateEvaluating(dt);
                 break;
-            // Won / Lost — no per-frame logic, overlays handle input
         }
 
         this._input.endFrame();
     }
 
-    // ── Aiming ────────────────────────────────────────────
-
     private _updateAiming(): void {
-        // Check release BEFORE calling launcher.update().
-        // When pointerJustReleased=true, pointerDown is already false, so
-        // update() would reset pullDistance to 0 before we can read it.
+        // Evaluate release before update() because update() resets pull when pointerDown=false.
         if (this._input.pointerJustReleased && this._launcher.pullDistance > 0.15) {
             this._doLaunch();
             return;
         }
-        this._launcher.update(this._input);
+        this._launcher.update(this._input, this._gravity.currentGravity);
     }
 
     private _doLaunch(): void {
@@ -234,7 +217,6 @@ export class Game {
         this._projectile.launch(vel);
         this._refreshShadowCasters();
 
-        // Begin camera transition
         const camStart = this._camera.camera.position.clone();
         const camStartLook = this._camera.camera.getTarget();
 
@@ -249,37 +231,28 @@ export class Game {
         this._state.transition(GameState.Launching);
     }
 
-    // ── Launching (camera transition) ─────────────────────
-
     private _updateLaunching(dt: number): void {
-        this._projectile.update(dt);
+        this._projectile.update(dt, this._gravity.currentGravity);
         const done = this._camera.update(dt, this._projectile.position, this._projectile.velocity);
-        // Run collision even during transition
         this._runCollisions();
         if (done) {
             this._state.transition(GameState.Flying);
         }
     }
 
-    // ── Flying ────────────────────────────────────────────
-
     private _updateFlying(dt: number): void {
         this._flight.update(this._projectile.projectile, this._input, dt);
 
-        const stillAlive = this._projectile.update(dt);
+        const stillAlive = this._projectile.update(dt, this._gravity.currentGravity);
         this._camera.update(dt, this._projectile.position, this._projectile.velocity);
         this._runCollisions();
 
         if (!stillAlive) {
-            // Projectile hit ground or timed out
             this._state.transition(GameState.Evaluating);
         }
     }
 
-    // ── Evaluating ────────────────────────────────────────
-
     private _updateEvaluating(dt: number): void {
-        // Brief pause before deciding win/lose/retry
         this._evaluateDelay += dt;
         if (this._evaluateDelay < 0.8) return;
         this._evaluateDelay = 0;
@@ -289,7 +262,6 @@ export class Game {
         } else if (this._score.shotsUsed >= this._levels.currentDef.maxShots) {
             this._state.transition(GameState.Lost);
         } else {
-            // Reset for next shot
             this._prepareNextShot();
         }
     }
@@ -304,8 +276,6 @@ export class Game {
         setSkyboxVisible(false);
         this._state.transition(GameState.Aiming);
     }
-
-    // ── Collision helper ──────────────────────────────────
 
     private _runCollisions(): void {
         const result = this._targets.checkCollisions(

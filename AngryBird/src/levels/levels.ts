@@ -20,11 +20,10 @@ export const LEVELS: LevelDef[] = [
                 size: { x: 0.5, y: 2.5, z: 2 },
                 destructible: true,
                 health: 1,
-                materialType: "wood"
+                materialType: "wood",
             },
         ],
     },
-
     {
         id: "level_2",
         name: "Little Fortress",
@@ -45,32 +44,31 @@ export const LEVELS: LevelDef[] = [
                 size: { x: 0.5, y: 3, z: 3 },
                 destructible: true,
                 health: 2,
-                materialType: "stone"
+                materialType: "stone",
             },
             {
                 position: { x: 11, y: 2, z: 0 },
                 size: { x: 3, y: 0.4, z: 2 },
                 destructible: true,
                 health: 2,
-                materialType: "wood"
+                materialType: "wood",
             },
             {
                 position: { x: 13, y: 0, z: 0 },
                 size: { x: 0.5, y: 3, z: 2 },
                 destructible: true,
                 health: 2,
-                materialType: "stone"
+                materialType: "stone",
             },
             {
                 position: { x: 13.5, y: 0, z: -2 },
                 size: { x: 1, y: 2, z: 0.5 },
                 destructible: true,
                 health: 1,
-                materialType: "wood"
+                materialType: "wood",
             },
         ],
     },
-
     {
         id: "level_3",
         name: "Scattered Pigs",
@@ -92,28 +90,28 @@ export const LEVELS: LevelDef[] = [
                 size: { x: 2, y: 1.5, z: 0.5 },
                 destructible: true,
                 health: 1,
-                materialType: "wood"
+                materialType: "wood",
             },
             {
                 position: { x: 19, y: 0, z: 0 },
                 size: { x: 0.5, y: 4, z: 2 },
                 destructible: true,
                 health: 3,
-                materialType: "stone"
+                materialType: "stone",
             },
             {
                 position: { x: 21, y: 0, z: 0 },
                 size: { x: 0.5, y: 4, z: 2 },
                 destructible: true,
                 health: 3,
-                materialType: "stone"
+                materialType: "stone",
             },
             {
                 position: { x: 20, y: 4, z: 0 },
                 size: { x: 3, y: 0.4, z: 2.5 },
                 destructible: true,
                 health: 2,
-                materialType: "wood"
+                materialType: "wood",
             },
         ],
     },

@@ -103,7 +103,7 @@ export class LauncherSystem {
      * Per-frame update during Aiming state.
      * Reads input to compute pull and trajectory preview.
      */
-    update(input: InputController): void {
+    update(input: InputController, gravity: number = GRAVITY): void {
         if (input.pointerDown) {
             // Map vertical drag to pull distance (drag down = more pull)
             const rawPull = input.dragDY / (input.canvasHeight * 0.35);
@@ -116,7 +116,7 @@ export class LauncherSystem {
             this.pullDistance = 0;
         }
 
-        this._updateTrajectory();
+        this._updateTrajectory(gravity);
         this._updateBand();
     }
 
@@ -144,17 +144,23 @@ export class LauncherSystem {
 
     // ── private helpers ───────────────────────────────────
 
-    private _updateTrajectory(): void {
+    private _updateTrajectory(gravity: number): void {
         if (this.pullDistance < 0.05) {
             this._trajectoryDots.forEach((d) => (d.isVisible = false));
             return;
         }
+
+        // On moon gravity use longer time step to show the full extended arc
+        const timeStep = gravity === -1.62 
+            ? TRAJECTORY_TIME_STEP * 3.5  // moon — much longer arc
+            : TRAJECTORY_TIME_STEP;       // earth — normal
+
         const pts = ballisticTrajectory(
             this.launchPoint,
             this.launchVelocity,
-            GRAVITY,
+            gravity,
             TRAJECTORY_SEGMENTS,
-            TRAJECTORY_TIME_STEP,
+            timeStep,
         );
         for (let i = 0; i < this._trajectoryDots.length; i++) {
             const dot = this._trajectoryDots[i];

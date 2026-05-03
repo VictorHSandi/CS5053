@@ -7,6 +7,8 @@
 import "@babylonjs/core/Engines/engine";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Meshes/meshBuilder";
+import "@babylonjs/core/Physics/v2/physicsEngineComponent";      // registers scene.enablePhysics()
+import "@babylonjs/core/Physics/joinedPhysicsEngineComponent";   // hooks physics into render loop
 
 import { Game } from "./game/Game";
 
@@ -17,5 +19,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     // Kick off everything
-    new Game(canvas);
+    const game = new Game(canvas);
+    (window as any).__game = game; // DEBUG: expose for console testing
 });

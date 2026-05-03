@@ -9,22 +9,25 @@ import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator"
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { CubeTexture } from "@babylonjs/core/Materials/Textures/cubeTexture";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
+import { PhysicsAggregate } from "@babylonjs/core/Physics/v2/physicsAggregate";
+import { PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
+import HavokPhysics from "@babylonjs/havok";
 
-import { GROUND_SIZE } from "../utils/Constants";
+import { GROUND_SIZE, SKY_COLOR } from "../utils/Constants";
 import { SkyboxType } from "../levels/LevelData";
 
 const GRASS_TEXTURE_URL =
-  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rocky_terrain_02/rocky_terrain_02_diff_4k.jpg";
+    "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rocky_terrain_02/rocky_terrain_02_diff_4k.jpg";
 
 const NORMAL_TEXTURE_URL =
-  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rocky_terrain_02/rocky_terrain_02_nor_gl_4k.jpg";
+    "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rocky_terrain_02/rocky_terrain_02_nor_gl_4k.jpg";
 
 let _skyboxMesh: Mesh | null = null;
 
 function applyLightingPreset(scene: Scene, type: SkyboxType): void {
     const hemi = scene.getLightByName("hemi") as HemisphericLight | null;
     const sun = scene.getLightByName("sun") as DirectionalLight | null;
-
     if (!hemi || !sun) return;
 
     if (type === "night") {
@@ -61,32 +64,32 @@ export function setSkybox(scene: Scene, type: SkyboxType): void {
     }
 
     const skybox = MeshBuilder.CreateBox("skyBox", { size: 10000 }, scene);
-
     const mat = new StandardMaterial("skyBoxMat", scene);
     mat.backFaceCulling = false;
     mat.disableLighting = true;
 
     if (type === "tropical") {
         scene.clearColor = new Color4(0.53, 0.81, 0.98, 1);
-
         const tex = new CubeTexture(
             "https://assets.babylonjs.com/textures/TropicalSunnyDay",
-            scene
+            scene,
         );
-
         tex.coordinatesMode = Texture.SKYBOX_MODE;
         mat.reflectionTexture = tex;
-    }
-
-    else if (type === "night") {
+    } else {
         scene.clearColor = new Color4(0.01, 0.01, 0.05, 1);
-
         const tex = new CubeTexture(
             "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/cube/MilkyWay/",
             scene,
-            ["dark-s_px.jpg", "dark-s_nx.jpg", "dark-s_py.jpg", "dark-s_ny.jpg", "dark-s_pz.jpg", "dark-s_nz.jpg"]
+            [
+                "dark-s_px.jpg",
+                "dark-s_nx.jpg",
+                "dark-s_py.jpg",
+                "dark-s_ny.jpg",
+                "dark-s_pz.jpg",
+                "dark-s_nz.jpg",
+            ],
         );
-
         tex.coordinatesMode = Texture.SKYBOX_MODE;
         mat.reflectionTexture = tex;
     }
@@ -103,8 +106,12 @@ export function setSkyboxVisible(visible: boolean): void {
     _skyboxMesh.setEnabled(visible);
 }
 
-export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerator } {
-    scene.clearColor = new Color4(0.53, 0.81, 0.98, 1);
+export async function setupEnvironment(scene: Scene): Promise<{ shadowGenerator: ShadowGenerator }> {
+    scene.clearColor = new Color4(SKY_COLOR.r, SKY_COLOR.g, SKY_COLOR.b, 1);
+
+    const havokInstance = await HavokPhysics();
+    const havokPlugin = new HavokPlugin(true, havokInstance);
+    scene.enablePhysics(new Vector3(0, -9.81, 0), havokPlugin);
 
     const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
     hemi.intensity = 0.55;
@@ -112,12 +119,7 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     hemi.specular = new Color3(0.12, 0.12, 0.12);
     hemi.groundColor = new Color3(0.35, 0.3, 0.25);
 
-    const sun = new DirectionalLight(
-        "sun",
-        new Vector3(-1, -2, 1).normalize(),
-        scene
-    );
-
+    const sun = new DirectionalLight("sun", new Vector3(-1, -2, 1).normalize(), scene);
     sun.intensity = 0.75;
     sun.diffuse = new Color3(1, 0.75, 0.55);
     sun.position = new Vector3(20, 40, -20);
@@ -129,11 +131,10 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     const ground = MeshBuilder.CreateGround(
         "ground",
         { width: GROUND_SIZE, height: GROUND_SIZE, subdivisions: 500 },
-        scene
+        scene,
     );
 
     const groundMat = new StandardMaterial("groundMat", scene);
-
     const grassTex = new Texture(GRASS_TEXTURE_URL, scene);
     grassTex.uScale = GROUND_SIZE / 20;
     grassTex.vScale = GROUND_SIZE / 20;
@@ -145,6 +146,17 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
 
     ground.material = groundMat;
     ground.receiveShadows = true;
+
+    new PhysicsAggregate(
+        ground,
+        PhysicsShapeType.BOX,
+        {
+            mass: 0,
+            restitution: 0.01,
+            friction: 1,
+        },
+        scene,
+    );
 
     return { shadowGenerator: shadowGen };
 }

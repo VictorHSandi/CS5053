@@ -5,6 +5,8 @@
 export class InputController {
     // Keyboard
     public readonly keys = new Set<string>();
+    // Keys pressed this frame only (cleared at end of frame)
+    public readonly keysJustPressed = new Set<string>(); // NEW
 
     // Pointer / mouse
     public pointerDown = false;
@@ -23,8 +25,12 @@ export class InputController {
 
     constructor(canvas: HTMLCanvasElement) {
         this._canvas = canvas;
-
-        window.addEventListener("keydown", (e) => this.keys.add(e.code));
+        window.addEventListener("keydown", (e) => {
+            if (!this.keys.has(e.code)) {
+                this.keysJustPressed.add(e.code); // only on initial press, not hold
+            }
+            this.keys.add(e.code);
+        });
         window.addEventListener("keyup", (e) => this.keys.delete(e.code));
 
         canvas.addEventListener("pointerdown", (e) => {
@@ -36,7 +42,6 @@ export class InputController {
             this.dragDX = 0;
             this.dragDY = 0;
         });
-
         canvas.addEventListener("pointermove", (e) => {
             this.pointerX = e.offsetX;
             this.pointerY = e.offsetY;
@@ -45,12 +50,10 @@ export class InputController {
                 this.dragDY = this.pointerY - this.pointerStartY;
             }
         });
-
         canvas.addEventListener("pointerup", () => {
             this.pointerDown = false;
             this.pointerJustReleased = true;
         });
-
         canvas.addEventListener("pointerleave", () => {
             if (this.pointerDown) {
                 this.pointerDown = false;
@@ -62,6 +65,7 @@ export class InputController {
     /** Call at the END of each game-loop tick to reset one-frame flags. */
     endFrame(): void {
         this.pointerJustReleased = false;
+        this.keysJustPressed.clear(); // NEW — reset single-frame key presses
     }
 
     get canvasWidth(): number {

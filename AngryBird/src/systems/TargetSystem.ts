@@ -2,7 +2,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Projectile } from "../entities/Projectile";
 import { Target } from "../entities/Target";
 import { Obstacle } from "../entities/Obstacle";
-import { TARGET_HIT_VELOCITY_MIN } from "../utils/Constants";
+import { TARGET_HIT_VELOCITY_MIN, OBSTACLE_IMPULSE_MULT } from "../utils/Constants";
 
 export interface CollisionResult {
     targetsHit: Target[];
@@ -52,13 +52,24 @@ export class TargetSystem {
             const bb = obs.mesh.getBoundingInfo().boundingBox;
             const closest = Vector3.Clamp(pPos, bb.minimumWorld, bb.maximumWorld);
             const dist = Vector3.Distance(pPos, closest);
-            if (dist < pRad) {
+            if (dist < pRad * 2.5) {
+
+                // Apply impulse FIRST before any destruction check
+                const impulseDir = obs.mesh.position
+                    .subtract(pPos)
+                    .normalize()
+                    .add(new Vector3(0, 0.2, 0))
+                    .normalize();
+                const impulseMag = speed * OBSTACLE_IMPULSE_MULT;
+                obs.applyImpulse(impulseDir.scale(impulseMag), pPos);
+
+                // THEN apply damage
                 const destroyed = obs.hit();
                 if (destroyed) {
                     result.obstaclesHit.push(obs);
-                    result.totalScore += 25; // small bonus for breaking structures
+                    result.totalScore += 25;
                 }
-                // Reflect / stop projectile on obstacle hit
+
                 projectile.velocity = projectile.velocity.scale(0.15);
             }
         }

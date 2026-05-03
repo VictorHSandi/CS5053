@@ -13,30 +13,32 @@ export class SceneManager {
 
     constructor(private _canvas: HTMLCanvasElement) {
         this.engine = new Engine(_canvas, true, { preserveDrawingBuffer: true, stencil: true });
-        this._createScene();
 
-        // Babylon.js registers a contextmenu←preventDefault handler in the bubbling phase.
-        // Our capture-phase listener fires first and stops propagation, preserving
-        // the native right-click menu so DevTools (right-click → Inspect) works.
+        // Store the ready promise so Game can await async physics setup.
+        this.ready = this._createScene();
+
         _canvas.addEventListener(
             "contextmenu",
             (e) => e.stopImmediatePropagation(),
-            true, // capture phase — runs before Babylon's bubbling-phase handler
+            true,
         );
 
         window.addEventListener("resize", () => this.engine.resize());
     }
 
-    private _createScene(): void {
+    // Exposed so callers can await physics and environment initialization.
+    public ready: Promise<void>;
+
+    private async _createScene(): Promise<void> {
         this.scene = new Scene(this.engine);
-        const env = setupEnvironment(this.scene);
+        const env = await setupEnvironment(this.scene);
         this.shadowGenerator = env.shadowGenerator;
     }
 
     /** Tear down and rebuild the scene (used for hard resets if needed). */
     recreateScene(): void {
         this.scene.dispose();
-        this._createScene();
+        this.ready = this._createScene();
     }
 
     /** Start the render loop. `beforeRender` is called each frame with delta-time in seconds. */

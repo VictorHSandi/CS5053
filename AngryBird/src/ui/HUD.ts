@@ -12,6 +12,7 @@ export class HUD {
     private _scoreText: TextBlock;
     private _targetsText: TextBlock;
     private _controlHint: TextBlock;
+    private _gravityText: TextBlock; // NEW
 
     constructor(private _ui: AdvancedDynamicTexture) {
         const panel = new StackPanel("hudPanel");
@@ -23,10 +24,22 @@ export class HUD {
         panel.width = "360px";
         _ui.addControl(panel);
 
-        this._levelText = this._addLine(panel, "Level: —", 22);
-        this._shotsText = this._addLine(panel, "Shots: 0 / 0", 20);
-        this._scoreText = this._addLine(panel, "Score: 0", 20);
-        this._targetsText = this._addLine(panel, "Targets: 0", 20);
+        this._levelText   = this._addLine(panel, "Level: —",      22);
+        this._shotsText   = this._addLine(panel, "Shots: 0 / 0",  20);
+        this._scoreText   = this._addLine(panel, "Score: 0",       20);
+        this._targetsText = this._addLine(panel, "Targets: 0",     20);
+
+        // Gravity indicator — top right corner               // NEW
+        this._gravityText = new TextBlock("gravityIndicator", "🌍 Earth Gravity");
+        this._gravityText.color = "white";
+        this._gravityText.fontSize = 18;
+        this._gravityText.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        this._gravityText.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        this._gravityText.paddingRightInPixels = 20;
+        this._gravityText.paddingTopInPixels = 16;
+        this._gravityText.outlineColor = "black";
+        this._gravityText.outlineWidth = 3;
+        _ui.addControl(this._gravityText);                    // NEW
 
         // Control hint (bottom-left)
         this._controlHint = new TextBlock("hint", "Drag down & sideways to aim • Release to launch");
@@ -43,30 +56,39 @@ export class HUD {
     }
 
     update(levelName: string, shotsUsed: number, maxShots: number, score: number, targetsLeft: number): void {
-        this._levelText.text = `Level: ${levelName}`;
-        this._shotsText.text = `Shots: ${shotsUsed} / ${maxShots}`;
-        this._scoreText.text = `Score: ${score}`;
+        this._levelText.text   = `Level: ${levelName}`;
+        this._shotsText.text   = `Shots: ${shotsUsed} / ${maxShots}`;
+        this._scoreText.text   = `Score: ${score}`;
         this._targetsText.text = `Targets: ${targetsLeft} remaining`;
     }
+
+    /** Call when gravity is toggled to update the indicator. */ 
+    setGravity(isEarthGravity: boolean): void {                 
+        this._gravityText.text  = isEarthGravity               
+            ? "🌍 Earth Gravity"                               
+            : "🌙 Moon Gravity";                               
+        this._gravityText.color = isEarthGravity ? "white" : "#aaddff"; //blue tint on moon
+    }                                                           
 
     setHint(text: string): void {
         this._controlHint.text = text;
     }
 
     setVisible(visible: boolean): void {
-        this._levelText.isVisible = visible;
-        this._shotsText.isVisible = visible;
-        this._scoreText.isVisible = visible;
+        this._levelText.isVisible   = visible;
+        this._shotsText.isVisible   = visible;
+        this._scoreText.isVisible   = visible;
         this._targetsText.isVisible = visible;
         this._controlHint.isVisible = visible;
+        this._gravityText.isVisible = visible;
     }
 
     private _addLine(parent: StackPanel, text: string, size: number): TextBlock {
         const tb = new TextBlock();
-        tb.text = text;
+        tb.text  = text;
         tb.color = "white";
         tb.fontSize = size;
-        tb.height = `${size + 10}px`;
+        tb.height   = `${size + 10}px`;
         tb.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         tb.outlineColor = "black";
         tb.outlineWidth = 3;
