@@ -32,6 +32,8 @@ export interface ObstacleConfig {
     destructible?: boolean;
     health?: number;
     materialType?: "wood" | "stone";
+    startLocked?: boolean;
+    onFirstImpact?: () => void;
 }
 
 /**
@@ -47,13 +49,21 @@ export class Obstacle {
     private _physicsAggregate: PhysicsAggregate | null = null;
     private _lastHitTime = 0;
     private _lastImpulseTime = 0;
+    private _scene: Scene;
+    private _mass: number;
+    private _locked: boolean;
+    private _unlockTriggered = false;
+    private _onFirstImpact: (() => void) | null;
 
     constructor(scene: Scene, config: ObstacleConfig) {
         this.id = uid("obstacle");
+        this._scene = scene;
 
         const size = config.size ?? new Vector3(1, 1, 1);
         this.health = config.health ?? 2;
         this.destructible = config.destructible ?? true;
+        this._locked = config.startLocked ?? true;
+        this._onFirstImpact = config.onFirstImpact ?? null;
 
         this.mesh = MeshBuilder.CreateBox(
             this.id,
@@ -104,25 +114,17 @@ export class Obstacle {
         this.mesh.receiveShadows = true;
 
         const massScale = materialType === "stone" ? 1.35 : 0.75;
-
-        this._physicsAggregate = new PhysicsAggregate(
-            this.mesh,
-            PhysicsShapeType.BOX,
-            {
-                mass: OBSTACLE_MASS * massScale,
-                restitution: OBSTACLE_RESTITUTION,
-                friction: OBSTACLE_FRICTION,
-            },
-            scene,
-        );
-        this._physicsAggregate.body.disablePreStep = false;
-        // Slight damping keeps motion plausible while still allowing topples.
-        (this._physicsAggregate.body as any).setLinearDamping?.(0.08);
-        (this._physicsAggregate.body as any).setAngularDamping?.(0.12);
+        this._mass = OBSTACLE_MASS * massScale;
+        this._recreatePhysicsAggregate(this._locked ? 0 : this._mass);
     }
 
     hit(damage = 1): boolean {
         if (this.destroyed || !this.destructible) return false;
+
+        if (this._locked) {
+            this._handleFirstImpact();
+            this.unlock();
+        }
 
         // Prevent one sustained overlap from draining all health in a single instant.
         const now = Date.now();
@@ -158,7 +160,14 @@ export class Obstacle {
 
     /** Apply a physics impulse at a world-space contact point. */
     applyImpulse(impulse: Vector3, contactPoint: Vector3): void {
-        if (this.destroyed || !this._physicsAggregate) return;
+        if (this.destroyed) return;
+
+        if (this._locked) {
+            this._handleFirstImpact();
+            this.unlock();
+        }
+
+        if (!this._physicsAggregate) return;
 
         const now = Date.now();
         if (now - this._lastImpulseTime < 60) return;
@@ -178,6 +187,56 @@ export class Obstacle {
             [impulse.x, impulse.y, impulse.z],
             [contactPoint.x, contactPoint.y, contactPoint.z],
         );
+    }
+
+    unlock(): void {
+        if (this.destroyed || !this._locked) return;
+        this._locked = false;
+
+        // Preserve current transform while swapping from static to dynamic body.
+        const pos = this.mesh.position.clone();
+        const rot = this.mesh.rotation.clone();
+        const rotQ = this.mesh.rotationQuaternion?.clone() ?? null;
+
+        this._recreatePhysicsAggregate(this._mass);
+
+        this.mesh.position.copyFrom(pos);
+        if (rotQ) {
+            this.mesh.rotationQuaternion = rotQ;
+        } else {
+            this.mesh.rotation.copyFrom(rot);
+        }
+    }
+
+    private _handleFirstImpact(): void {
+        if (this._unlockTriggered) return;
+        this._unlockTriggered = true;
+        this._onFirstImpact?.();
+    }
+
+    private _recreatePhysicsAggregate(mass: number): void {
+        if (this._physicsAggregate) {
+            this._physicsAggregate.dispose();
+            this._physicsAggregate = null;
+        }
+
+        this._physicsAggregate = new PhysicsAggregate(
+            this.mesh,
+            PhysicsShapeType.BOX,
+            {
+                mass,
+                restitution: OBSTACLE_RESTITUTION,
+                friction: OBSTACLE_FRICTION,
+            },
+            this._scene,
+        );
+        this._physicsAggregate.body.disablePreStep = false;
+
+        // Slight damping keeps motion plausible while still allowing topples.
+        if (mass > 0) {
+            (this._physicsAggregate.body as any).setLinearDamping?.(0.08);
+            (this._physicsAggregate.body as any).setAngularDamping?.(0.12);
+        }
     }
 
     dispose(): void {

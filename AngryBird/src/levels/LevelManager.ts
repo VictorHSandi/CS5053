@@ -12,6 +12,7 @@ import { LEVELS } from "./levels";
  */
 export class LevelManager {
     private _currentIndex = 0;
+    private _obstaclesUnlocked = false;
     public targets: Target[] = [];
     public obstacles: Obstacle[] = [];
     public powerups: Powerup[] = [];
@@ -35,6 +36,7 @@ export class LevelManager {
     /** Load (or reload) the current level into the given scene. */
     load(scene: Scene): void {
         this.clearEntities();
+        this._obstaclesUnlocked = false;
         const def = this.currentDef;
 
         // Swap skybox to match this level
@@ -48,7 +50,9 @@ export class LevelManager {
                     color: toColor3(od.color),
                     destructible: od.destructible,
                     health: od.health,
-                    materialType: od.materialType, 
+                    materialType: od.materialType,
+                    startLocked: true,
+                    onFirstImpact: () => this.unlockAllObstacles(),
                 }),
             );
         }
@@ -80,6 +84,16 @@ export class LevelManager {
                     type: pd.type,
                 }),
             );
+        }
+    }
+
+    /** Unlock all obstacles after first meaningful impact. */
+    unlockAllObstacles(): void {
+        if (this._obstaclesUnlocked) return;
+        this._obstaclesUnlocked = true;
+
+        for (const obstacle of this.obstacles) {
+            obstacle.unlock();
         }
     }
 
@@ -141,6 +155,7 @@ export class LevelManager {
         this.targets = [];
         this.obstacles = [];
         this.powerups = [];
+        this._obstaclesUnlocked = false;
     }
 
     /** Number of objective targets still alive (barrels do not count). */
