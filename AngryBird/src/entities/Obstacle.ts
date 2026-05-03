@@ -97,12 +97,6 @@ export class Obstacle {
         console.log("🪵 WOOD OBSTACLE CREATED");
 
         const mat = new StandardMaterial(`${this.id}_mat`, scene);
-<<<<<<< HEAD
-        mat.ambientColor = new Color3(0.16, 0.12, 0.06);
-        mat.diffuseColor = config.color ?? new Color3(0.72, 0.53, 0.24);
-        mat.specularColor = new Color3(0.15, 0.15, 0.15);
-        mat.specularPower = 48;
-=======
 
         const tex = new Texture(WOOD_TEXTURE_URL, scene);
         const normalTex = new Texture(WOOD_NORMAL_URL, scene);
@@ -119,7 +113,6 @@ export class Obstacle {
         normalTex.uScale = size.x;
         normalTex.vScale = size.y;
 
->>>>>>> Textures
         this.mesh.material = mat;
         this.mesh.receiveShadows = true;
     }

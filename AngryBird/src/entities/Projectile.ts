@@ -151,16 +151,9 @@ export class Projectile {
         );
 
         const mat = new StandardMaterial("projectileMat", scene);
-<<<<<<< HEAD
-        mat.ambientColor = new Color3(0.25, 0.08, 0.08);
-        mat.diffuseColor = this._config.color;
-        mat.specularColor = new Color3(0.4, 0.4, 0.4);
-        mat.specularPower = 96;
-=======
         mat.diffuseTexture = createBirdTexture(scene);
         mat.specularColor = new Color3(0.2, 0.2, 0.2);
         mat.specularPower = 16;
->>>>>>> Textures
         this.mesh.material = mat;
         this.mesh.receiveShadows = true;
         this.mesh.isVisible = false;

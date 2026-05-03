@@ -65,14 +65,7 @@ export function setSkybox(scene: Scene, type: SkyboxType): void {
 }
 
 export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerator } {
-<<<<<<< HEAD
-    // Sky colour
-    scene.clearColor = new Color4(SKY_COLOR.r, SKY_COLOR.g, SKY_COLOR.b, 1);
-    // Explicit scene ambient term for grading clarity.
-    scene.ambientColor = new Color3(0.18, 0.18, 0.18);
-=======
     scene.clearColor = new Color4(0.53, 0.81, 0.98, 1);
->>>>>>> Textures
 
     const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
     hemi.intensity = 0.55;
@@ -80,15 +73,6 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     hemi.specular = new Color3(0.12, 0.12, 0.12);
     hemi.groundColor = new Color3(0.35, 0.3, 0.25);
 
-<<<<<<< HEAD
-    // Directional sun from launcher side (negative X) toward targets (positive X).
-    // Moderate downward angle keeps object shadows readable while launcher base now contacts ground.
-    const sun = new DirectionalLight("sun", new Vector3(1, -1.1, -0.45).normalize(), scene);
-    sun.intensity = 0.9;
-    sun.diffuse = new Color3(1, 0.96, 0.9);
-    sun.specular = new Color3(0.95, 0.95, 0.95);
-    sun.position = new Vector3(-90, 36, 0);
-=======
     const sun = new DirectionalLight(
         "sun",
         new Vector3(-1, -2, 1).normalize(),
@@ -98,7 +82,6 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     sun.intensity = 0.75;
     sun.diffuse = new Color3(1, 0.75, 0.55);
     sun.position = new Vector3(20, 40, -20);
->>>>>>> Textures
 
     const shadowGen = new ShadowGenerator(1024, sun);
     shadowGen.useBlurExponentialShadowMap = true;
@@ -111,12 +94,6 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     );
 
     const groundMat = new StandardMaterial("groundMat", scene);
-<<<<<<< HEAD
-    groundMat.ambientColor = new Color3(0.16, 0.2, 0.12);
-    groundMat.diffuseColor = new Color3(0.42, 0.65, 0.28);
-    groundMat.specularColor = new Color3(0.05, 0.05, 0.05);
-    groundMat.specularPower = 32;
-=======
 
     const grassTex = new Texture(GRASS_TEXTURE_URL, scene);
     grassTex.uScale = GROUND_SIZE / 20;
@@ -127,7 +104,6 @@ export function setupEnvironment(scene: Scene): { shadowGenerator: ShadowGenerat
     groundMat.specularColor = new Color3(0.05, 0.05, 0.05);
     groundMat.specularPower = 0;
 
->>>>>>> Textures
     ground.material = groundMat;
     ground.receiveShadows = true;
 
