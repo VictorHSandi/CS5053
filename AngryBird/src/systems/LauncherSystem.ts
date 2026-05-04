@@ -79,11 +79,15 @@ export class LauncherSystem {
 
         // Trajectory dots
         const dotMat = new StandardMaterial("dotMat", scene);
-        dotMat.diffuseColor = new Color3(1, 1, 1);
-        dotMat.alpha = 0.5;
+        dotMat.diffuseColor = new Color3(1.0, 0.96, 0.68);
+        dotMat.emissiveColor = new Color3(0.92, 0.84, 0.30);
+        dotMat.disableLighting = true;
+        dotMat.alpha = 0.92;
         for (let i = 0; i < TRAJECTORY_SEGMENTS; i++) {
-            const dot = MeshBuilder.CreateSphere(`dot_${i}`, { diameter: 0.12 }, scene);
+            const dot = MeshBuilder.CreateSphere(`dot_${i}`, { diameter: 0.16 }, scene);
             dot.material = dotMat;
+            dot.renderingGroupId = 2;
+            dot.alwaysSelectAsActiveMesh = true;
             dot.isVisible = false;
             this._trajectoryDots.push(dot);
         }

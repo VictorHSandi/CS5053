@@ -28,18 +28,7 @@ export class HUD {
         this._shotsText   = this._addLine(panel, "Shots: 0 / 0",  20);
         this._scoreText   = this._addLine(panel, "Score: 0",       20);
         this._targetsText = this._addLine(panel, "Targets: 0",     20);
-
-        // Gravity indicator — top right corner               // NEW
-        this._gravityText = new TextBlock("gravityIndicator", "🌍 Earth Gravity");
-        this._gravityText.color = "white";
-        this._gravityText.fontSize = 18;
-        this._gravityText.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
-        this._gravityText.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        this._gravityText.paddingRightInPixels = 20;
-        this._gravityText.paddingTopInPixels = 16;
-        this._gravityText.outlineColor = "black";
-        this._gravityText.outlineWidth = 3;
-        _ui.addControl(this._gravityText);                    // NEW
+        this._gravityText = this._addLine(panel, "🌍 Earth Gravity", 18);
 
         // Control hint (bottom-left)
         this._controlHint = new TextBlock("hint", "Drag down & sideways to aim • Release to launch");
