@@ -31,14 +31,14 @@ function applyLightingPreset(scene: Scene, type: SkyboxType): void {
     if (!hemi || !sun) return;
 
     if (type === "night") {
-        hemi.intensity = 0.1;
-        hemi.diffuse = new Color3(0.2, 0.24, 0.34);
-        hemi.specular = new Color3(0.04, 0.05, 0.08);
-        hemi.groundColor = new Color3(0.03, 0.03, 0.05);
+        hemi.intensity = 0.32;
+        hemi.diffuse = new Color3(0.42, 0.48, 0.62);
+        hemi.specular = new Color3(0.08, 0.1, 0.16);
+        hemi.groundColor = new Color3(0.1, 0.1, 0.14);
 
-        sun.intensity = 0.65;
-        sun.diffuse = new Color3(0.7, 0.8, 1);
-        sun.specular = new Color3(0.5, 0.58, 0.75);
+        sun.intensity = 0.95;
+        sun.diffuse = new Color3(0.82, 0.9, 1);
+        sun.specular = new Color3(0.62, 0.72, 0.9);
         sun.direction = new Vector3(0.35, -1, -0.25).normalize();
         sun.position = new Vector3(-18, 42, 18);
         return;

@@ -1,0 +1,29 @@
+ANGER BALL
+
+A game project built for CS:5053.
+
+Programming
+Connor Corbin
+Kenny Bartel
+Mounir Zahidi
+Victor Sandi
+
+Game Design
+Connor Corbin
+Kenny Bartel
+Mounir Zahidi
+Victor Sandi
+
+Level Design
+Connor Corbin
+Victor Sandi
+
+UI and Audio Iteration
+Kenny Bartel
+Victor Sandi
+
+Special Thanks
+Doga Demirel
+Babylon.js
+
+Thank you for playing.

@@ -11,10 +11,15 @@ import { FlightControlSystem } from "../systems/FlightControlSystem";
 import { TargetSystem } from "../systems/TargetSystem";
 import { PowerupSystem } from "../systems/PowerupSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
+import { GameProgressStore } from "../systems/GameProgressStore";
 import { GravitySystem } from "../systems/GravitySystem";
+import { HighScoreStore } from "../systems/HighScoreStore";
 import { LevelManager } from "../levels/LevelManager";
+import { LEVELS } from "../levels/levels";
 import { LevelDef, toVec3 } from "../levels/LevelData";
 import { UIManager } from "../ui/UIManager";
+import { CreditsOverlay } from "../ui/CreditsOverlay";
+import { MainMenu } from "../ui/MainMenu";
 
 /**
  * Top-level game controller.
@@ -36,17 +41,22 @@ export class Game {
     private _score: ScoreSystem;
     private _gravity: GravitySystem;
     private _sound: SoundManager;
+    private _highScores: HighScoreStore;
+    private _progress: GameProgressStore;
 
     // Data
     private _levels: LevelManager;
 
     // UI
     private _ui: UIManager;
+    private _mainMenu: MainMenu;
+    private _credits: CreditsOverlay;
 
     // Misc
     private _evaluateDelay = 0;
     private _titanCoreReadyNextShot = false;
     private _titanCoreActiveThisShot = false;
+    private _optionsOpenInGame = false;
 
     constructor(canvas: HTMLCanvasElement) {
         this._sceneManager = new SceneManager(canvas);
@@ -65,8 +75,31 @@ export class Game {
         this._score = new ScoreSystem();
         this._levels = new LevelManager();
         this._ui = new UIManager(scene);
-        this._gravity = new GravitySystem(scene, this._ui.hud);
+        this._gravity = new GravitySystem(scene);
         this._sound = new SoundManager();
+        this._highScores = new HighScoreStore();
+        this._progress = new GameProgressStore();
+        this._credits = new CreditsOverlay();
+        this._mainMenu = new MainMenu({
+            onStartNew: () => this._startGameAtLevel(0),
+            onSelectLevel: (levelNumber) => this._startGameAtLevel(levelNumber - 1),
+            onGravityModeChange: (mode) => this._gravity.setMode(mode),
+            onSfxVolumeChange: (volume) => this._sound.setSfxVolume(volume),
+            onMusicVolumeChange: (volume) => this._sound.setMusicVolume(volume),
+            onSoundtrackModeChange: (mode) => {
+                this._progress.setSoundtrackMode(mode);
+                this._sound.setSoundtrackMode(mode);
+            },
+            onResetHighScores: () => {
+                this._highScores.resetAll();
+                this._refreshMenuHighScores();
+            },
+            onResumeFromOptions: () => this._closeInGameOptions(),
+            onReturnToMainMenu: () => this._returnToMainMenu(),
+        });
+        this._sound.setSoundtrackMode(this._progress.soundtrackMode);
+        this._refreshMenuHighScores();
+        this._refreshMenuProgress();
 
         // Init audio on first pointer interaction (browser autoplay policy)
         canvas.addEventListener("pointerdown", () => {
@@ -75,13 +108,73 @@ export class Game {
 
         this._ui.winScreen.onNext = () => this._advanceLevel();
         this._ui.winScreen.onRetry = () => this._restartLevel();
+        this._ui.winScreen.onCredits = () => this._showCredits();
         this._ui.loseScreen.onRetry = () => this._restartLevel();
 
         this._state.onChange((_prev, next) => this._onStateChange(next));
 
         this._sceneManager.ready.then(() => {
-            this._loadLevel();
+            this._ui.hud.setVisible(false);
+            this._mainMenu.show();
             this._sceneManager.run((dt) => this._update(dt));
+        });
+    }
+
+    private _refreshMenuHighScores(): void {
+        this._mainMenu.setLevelHighScores(LEVELS.map((level) => this._highScores.get(level.id)));
+    }
+
+    private _refreshMenuProgress(): void {
+        this._mainMenu.setEpicSoundtrackUnlocked(this._progress.epicUnlocked, this._progress.soundtrackMode);
+    }
+
+    private _startGameAtLevel(levelIndex: number): void {
+        this._optionsOpenInGame = false;
+        this._mainMenu.hide();
+        this._levels.setLevel(levelIndex);
+        this._loadLevel();
+    }
+
+    private _openInGameOptions(): void {
+        this._optionsOpenInGame = true;
+        this._ui.hud.setVisible(false);
+        this._mainMenu.showOptionsInGame();
+    }
+
+    private _closeInGameOptions(): void {
+        this._optionsOpenInGame = false;
+        this._mainMenu.hide();
+        if (this._state.state !== GameState.Won && this._state.state !== GameState.Lost) {
+            this._ui.hud.setVisible(true);
+        }
+    }
+
+    private _returnToMainMenu(): void {
+        this._optionsOpenInGame = false;
+        this._sound.stopPigOinks();
+        this._sound.clearCreditsThemeOverride();
+        this._credits.hide();
+        this._levels.clearEntities();
+        this._projectile.projectile.deactivate();
+        this._launcher.setVisible(false);
+        this._ui.winScreen.hide();
+        this._ui.loseScreen.hide();
+        this._ui.hud.setVisible(false);
+        setSkyboxVisible(false);
+        this._state.transition(GameState.MainMenu);
+        this._refreshMenuHighScores();
+        this._refreshMenuProgress();
+        this._mainMenu.show();
+    }
+
+    private _showCredits(): void {
+        this._ui.winScreen.hide();
+        this._sound.playCreditsTheme();
+        this._progress.unlockEpicSoundtrack();
+        this._refreshMenuProgress();
+        void this._credits.show(() => {
+            this._sound.clearCreditsThemeOverride();
+            this._returnToMainMenu();
         });
     }
 
@@ -167,15 +260,9 @@ export class Game {
 
     private _onStateChange(next: GameState): void {
         switch (next) {
-            case GameState.Aiming: {
-                const aimingHint = this._titanCoreReadyNextShot
-                    ? "Titan Core ready: this shot is empowered • Drag down to set power • Release to launch • G = toggle gravity"
-                    : "Drag down to set power • Release to launch • G = toggle gravity";
-                this._ui.hud.setHint(aimingHint);
+            case GameState.Aiming:
                 break;
-            }
             case GameState.Flying:
-                this._ui.hud.setHint("WASD / Arrows = steer • Space = boost (once) • G = toggle gravity");
                 break;
             case GameState.Won:
                 this._showWin();
@@ -188,26 +275,70 @@ export class Game {
 
     private _showWin(): void {
         const def = this._levels.currentDef;
-        const totalTargets = def.targets.filter((t) => (t.type ?? "pig") !== "barrel").length;
-        const breakdown = this._score.finalise(def, totalTargets);
-        this._ui.showWin(breakdown, this._levels.hasNextLevel);
+        const previousHighScore = this._highScores.get(def.id);
+        const breakdown = this._score.finalise(def, previousHighScore);
+        this._highScores.saveIfHigher(def.id, breakdown.totalScore);
+        this._refreshMenuHighScores();
+        this._ui.showWin(breakdown, this._levels.hasNextLevel, !this._levels.hasNextLevel);
     }
 
     private _update(dt: number): void {
         const state = this._state.state;
+
+        if (this._credits.isVisible && this._input.keysJustPressed.has("Escape")) {
+            this._credits.skip();
+            this._input.endFrame();
+            return;
+        }
+
+        if (state !== GameState.MainMenu && this._input.keysJustPressed.has("Escape")) {
+            if (this._optionsOpenInGame) {
+                this._closeInGameOptions();
+            } else if (state !== GameState.Won && state !== GameState.Lost) {
+                this._openInGameOptions();
+            }
+        }
+
+        if (state === GameState.MainMenu) {
+            this._input.endFrame();
+            return;
+        }
+
+        if (this._optionsOpenInGame) {
+            this._input.endFrame();
+            return;
+        }
+
         const def = this._levels.currentDef;
+        const totalPowerups = def.powerups?.length ?? 0;
+        const remainingPowerups = this._levels.powerups.filter((powerup) => !powerup.collected).length;
+        const powerupText = totalPowerups === 0
+            ? "None"
+            : this._titanCoreReadyNextShot
+                ? "Titan Core Ready"
+                : remainingPowerups > 0
+                    ? `Titan Core ${remainingPowerups} Left`
+                    : "Collected";
+        const powerupColor = totalPowerups === 0
+            ? "#7b88b3"
+            : this._titanCoreReadyNextShot
+                ? "#00ff88"
+                : remainingPowerups > 0
+                    ? "#66d9ff"
+                    : "#9dd1ff";
 
         if (state !== GameState.Won && state !== GameState.Lost) {
             this._ui.updateHUD(
                 def.name,
                 this._score.shotsUsed,
                 def.maxShots,
-                this._score.score,
+                this._score.liveScore,
                 this._levels.aliveTargetCount,
+                powerupText,
+                powerupColor,
             );
         }
 
-        this._gravity.update(this._input);
         this._powerups.update(this._levels.powerups, dt);
 
         switch (state) {
@@ -326,7 +457,11 @@ export class Game {
         );
 
         if (result.totalScore > 0) {
-            this._score.addScore(result.totalScore);
+            this._score.recordDestruction(
+                result.targetScore,
+                result.obstacleScore,
+                result.targetsHit.filter((target) => target.isObjective).length,
+            );
         }
 
         // Play sound effects based on what was hit this frame
@@ -340,7 +475,7 @@ export class Game {
         if (result.titanCoreConsumed) {
             this._titanCoreActiveThisShot = false;
             this._projectile.projectile.setTitanCoreCharged(false);
-            this._ui.hud.setHint("Titan Core activated: impact boosted.");
+            this._score.recordPowerupUse();
         }
     }
 
@@ -352,7 +487,6 @@ export class Game {
 
         if (collected.titanCoreCollected > 0) {
             this._titanCoreReadyNextShot = true;
-            this._ui.hud.setHint("Titan Core stored: next shot is empowered.");
         }
     }
 }

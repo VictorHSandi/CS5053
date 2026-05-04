@@ -32,6 +32,182 @@
 
 <body>
     <canvas id="renderCanvas"></canvas>
+    <div id="main-menu-root" role="dialog" aria-label="Main menu" aria-modal="true">
+        <section class="menu-shell">
+            <h1 class="menu-title">CS:5053 Anger Ball</h1>
+
+            <div id="menu-panel-main" class="menu-panel active" aria-label="Main options">
+                <button id="menu-action-start" class="menu-button" type="button">Start New</button>
+                <button id="menu-action-level-select" class="menu-button" type="button">Level Select</button>
+                <button id="menu-action-options" class="menu-button" type="button">Options</button>
+                <button id="menu-action-how-to-play" class="menu-button" type="button">How to Play</button>
+            </div>
+
+            <div id="menu-panel-levels" class="menu-panel" aria-label="Level select">
+                <h2 class="menu-heading">Select Level</h2>
+                <hr class="menu-divider" />
+                <div class="menu-grid">
+                    <button class="menu-button menu-level-button" type="button" data-level="1">
+                        <span class="menu-level-title">Level 1</span>
+                        <span id="menu-level-score-1" class="menu-level-score">High Score: 0</span>
+                    </button>
+                    <button class="menu-button menu-level-button" type="button" data-level="2">
+                        <span class="menu-level-title">Level 2</span>
+                        <span id="menu-level-score-2" class="menu-level-score">High Score: 0</span>
+                    </button>
+                    <button class="menu-button menu-level-button" type="button" data-level="3">
+                        <span class="menu-level-title">Level 3</span>
+                        <span id="menu-level-score-3" class="menu-level-score">High Score: 0</span>
+                    </button>
+                    <button class="menu-button menu-level-button" type="button" data-level="4">
+                        <span class="menu-level-title">Level 4</span>
+                        <span id="menu-level-score-4" class="menu-level-score">High Score: 0</span>
+                    </button>
+                    <button class="menu-button menu-level-button" type="button" data-level="5">
+                        <span class="menu-level-title">Level 5</span>
+                        <span id="menu-level-score-5" class="menu-level-score">High Score: 0</span>
+                    </button>
+                </div>
+                <hr class="menu-divider" />
+                <button id="menu-action-levels-back" class="menu-button" type="button">Back</button>
+            </div>
+
+            <div id="menu-panel-options" class="menu-panel" aria-label="Options">
+                <h2 class="menu-heading">Options</h2>
+                <hr class="menu-divider" />
+                <div class="option-group" role="group" aria-label="Gravity mode">
+                    <p class="menu-note">Gravity</p>
+                    <label class="toggle-row" for="menu-gravity-earth">
+                        <input id="menu-gravity-earth" type="radio" name="menu-gravity" value="earth" checked />
+                        <span>Earth</span>
+                    </label>
+                    <label class="toggle-row" for="menu-gravity-moon">
+                        <input id="menu-gravity-moon" type="radio" name="menu-gravity" value="moon" />
+                        <span>Moon</span>
+                    </label>
+                </div>
+                <hr class="menu-divider" />
+                <div class="option-group">
+                    <label class="slider-label" for="menu-sfx-volume">
+                        <span>Sound Effects</span>
+                        <span id="menu-sfx-volume-value" class="slider-value">70%</span>
+                    </label>
+                    <input id="menu-sfx-volume" class="menu-slider" type="range" min="0" max="100" step="1"
+                        value="70" />
+                </div>
+                <div class="option-group">
+                    <label class="slider-label" for="menu-music-volume">
+                        <span>Music</span>
+                        <span id="menu-music-volume-value" class="slider-value">65%</span>
+                    </label>
+                    <input id="menu-music-volume" class="menu-slider" type="range" min="0" max="100" step="1"
+                        value="65" />
+                </div>
+                <hr class="menu-divider" />
+                <div class="option-group" role="group" aria-label="Soundtrack mode">
+                    <p class="menu-note">Soundtrack</p>
+                    <label class="toggle-row" for="menu-soundtrack-classic">
+                        <input id="menu-soundtrack-classic" type="radio" name="menu-soundtrack" value="classic"
+                            checked />
+                        <span>Classic</span>
+                    </label>
+                    <label class="toggle-row" for="menu-soundtrack-epic">
+                        <input id="menu-soundtrack-epic" type="radio" name="menu-soundtrack" value="epic" disabled />
+                        <span>Epic</span>
+                        <span id="menu-soundtrack-epic-lock" class="menu-lock-note">Locked until credits</span>
+                    </label>
+                </div>
+                <hr class="menu-divider" />
+                <button id="menu-action-reset-high-scores" class="menu-button" type="button">Reset High Scores</button>
+                <hr class="menu-divider" />
+                <button id="menu-action-return-main" class="menu-button" type="button">Return to Main Menu</button>
+                <hr class="menu-divider menu-return-divider" />
+                <button id="menu-action-options-back" class="menu-button" type="button">Back</button>
+            </div>
+
+            <div id="menu-panel-how-to-play" class="menu-panel" aria-label="How to play">
+                <h2 class="menu-heading">How to Play</h2>
+                <hr class="menu-divider" />
+                <div class="howto-body">
+                    <section class="howto-section" aria-label="Core pieces">
+                        <h3 class="howto-title">Core Pieces</h3>
+                        <div class="howto-card-grid">
+                            <article class="howto-card">
+                                <div class="howto-icon howto-icon-bird" aria-hidden="true">
+                                    <span class="howto-bird-eye howto-bird-eye-left"></span>
+                                    <span class="howto-bird-eye howto-bird-eye-right"></span>
+                                </div>
+                                <p class="howto-card-title">Bird</p>
+                                <p class="howto-card-copy">Drag to pull, release to launch.</p>
+                            </article>
+                            <article class="howto-card">
+                                <div class="howto-icon howto-icon-target" aria-hidden="true"></div>
+                                <p class="howto-card-title">Targets</p>
+                                <p class="howto-card-copy">Destroy all pigs to clear the level.</p>
+                            </article>
+                            <article class="howto-card">
+                                <div class="howto-icon howto-icon-power" aria-hidden="true"></div>
+                                <p class="howto-card-title">Titan Core</p>
+                                <p class="howto-card-copy">Stored on pickup. Your next impact hits harder.</p>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="howto-section" aria-label="Objectives">
+                        <h3 class="howto-title">Objective</h3>
+                        <p class="menu-note">Break structures, line up smart impacts, and clear every target before you
+                            run out of shots.</p>
+                    </section>
+
+                    <section class="howto-section" aria-label="Controls">
+                        <h3 class="howto-title">Controls</h3>
+                        <div class="howto-controls-grid">
+                            <div class="howto-keys howto-keys-wasd" aria-hidden="true">
+                                <span class="key key-wide"></span>
+                                <span class="key">W</span>
+                                <span class="key key-wide"></span>
+                                <span class="key">A</span>
+                                <span class="key">S</span>
+                                <span class="key">D</span>
+                            </div>
+                            <p class="menu-note">Steer in flight</p>
+
+                            <div class="howto-keys" aria-hidden="true">
+                                <span class="key">&larr;</span>
+                                <span class="key">&uarr;</span>
+                                <span class="key">&rarr;</span>
+                            </div>
+                            <p class="menu-note">Alternate steering</p>
+
+                            <div class="howto-keys" aria-hidden="true">
+                                <span class="key key-space">SPACE</span>
+                            </div>
+                            <p class="menu-note">One-time boost</p>
+
+                            <div class="howto-keys" aria-hidden="true">
+                                <span class="key key-drag">DRAG</span>
+                            </div>
+                            <p class="menu-note">Aim and launch</p>
+
+                            <div class="howto-keys" aria-hidden="true">
+                                <span class="key">ESC</span>
+                            </div>
+                            <p class="menu-note">Options / Resume / Skip credits</p>
+                        </div>
+                    </section>
+                </div>
+                <hr class="menu-divider" />
+                <button id="menu-action-how-to-play-back" class="menu-button" type="button">Back</button>
+            </div>
+        </section>
+    </div>
+    <div id="credits-root" class="hidden" aria-label="Credits screen">
+        <section class="credits-shell">
+            <div class="credits-viewport">
+                <pre id="credits-text" class="credits-text"></pre>
+            </div>
+        </section>
+    </div>
     <script type="module" src="/src/main.ts"></script>
 </body>
 

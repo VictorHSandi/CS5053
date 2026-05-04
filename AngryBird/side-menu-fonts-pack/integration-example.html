@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Side Menu Integration Example</title>
+    <link rel="stylesheet" href="./side-menu-fonts.css">
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0a0a14;
+            color: #b0b8c8;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: "Share Tech Mono", "Courier New", monospace;
+        }
+
+        .demo-shell {
+            width: min(1200px, 100%);
+            border: 2px solid #222;
+            box-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
+        }
+
+        .demo-stage {
+            min-height: 520px;
+            border-right: 1px solid #1a1e30;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(circle at 30% 20%, #152046 0%, #0b1024 45%, #06080f 100%);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .demo-stage h2 {
+            margin: 0;
+            font-family: "Press Start 2P", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #ffd700;
+        }
+
+        @media (max-width: 1024px) {
+            .demo-stage {
+                border-right: none;
+                border-bottom: 1px solid #1a1e30;
+                min-height: 280px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-shell">
+        <div class="hud-layout">
+            <main class="hud-content demo-stage">
+                <h2>Replace this area with your canvas or app</h2>
+            </main>
+
+            <div id="side-panel" aria-label="Game status panel">
+                <h1>COIN<br>COLLECTOR</h1>
+
+                <div class="panel-section">
+                    <h2>Status</h2>
+                    <div class="stat-row">
+                        <span class="stat-label">Coins</span>
+                        <span class="stat-value">
+                            <span id="score" class="gold">0</span>
+                            <span class="dim">/</span>
+                            <span id="total" class="gold">7</span>
+                        </span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Elixir</span>
+                        <span class="stat-value" id="elixir-status"><span class="red">X Missing</span></span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Jump</span>
+                        <span class="stat-value" id="jump-status"><span class="dim">Normal</span></span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>Controls</h2>
+                    <div class="key-grid">
+                        <span class="key-badge">W A S D</span> <span class="key-desc">Move</span>
+                        <span class="key-badge">Q / E</span> <span class="key-desc">Turn L / R</span>
+                        <span class="key-badge">SPACE</span> <span class="key-desc">Jump</span>
+                        <span class="key-badge">R</span> <span class="key-desc">180 deg Spin</span>
+                        <span class="key-badge">F</span> <span class="key-desc">Replay (on win)</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>Objectives</h2>
+                    <div class="objective-item">Jump to collect coins</div>
+                    <div class="objective-item">Find the <span class="green">Elixir</span> to boost jump</div>
+                    <div class="objective-item">Reach the <span class="cyan">Top Coin</span></div>
+                    <div class="objective-item">Avoid <span class="red">red hazards</span></div>
+                    <div class="objective-item"><span id="message" class="dim"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./side-menu-helpers.js"></script>
+    <script>
+        var hud = createSideMenuController();
+        var score = 0;
+        var total = 7;
+
+        function tickDemo() {
+            score = (score + 1) % (total + 1);
+            hud.setTotals(score, total);
+            hud.setElixirFound(score >= 3);
+            hud.setJumpBoosted(score >= 3);
+
+            if (score === total) {
+                hud.showWin();
+            } else {
+                hud.setMessage('<span class="dim">Collect more coins...</span>');
+            }
+        }
+
+        setInterval(tickDemo, 1400);
+    </script>
+</body>
+
+</html>

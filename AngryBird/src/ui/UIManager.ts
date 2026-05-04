@@ -22,13 +22,21 @@ export class UIManager {
     }
 
     /** Update the HUD every frame. */
-    updateHUD(levelName: string, shotsUsed: number, maxShots: number, score: number, targetsLeft: number): void {
-        this.hud.update(levelName, shotsUsed, maxShots, score, targetsLeft);
+    updateHUD(
+        levelName: string,
+        shotsUsed: number,
+        maxShots: number,
+        score: number,
+        targetsLeft: number,
+        powerupText: string,
+        powerupColor: string,
+    ): void {
+        this.hud.update(levelName, shotsUsed, maxShots, score, targetsLeft, powerupText, powerupColor);
     }
 
-    showWin(breakdown: ScoreBreakdown, hasNext: boolean): void {
+    showWin(breakdown: ScoreBreakdown, hasNext: boolean, showCredits: boolean): void {
         this.hud.setVisible(false);
-        this.winScreen.show(breakdown, hasNext);
+        this.winScreen.show(breakdown, hasNext, showCredits);
     }
 
     showLose(): void {

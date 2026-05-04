@@ -2,12 +2,20 @@
  * SoundManager — all game audio generated procedurally via Web Audio API.
  * No external files needed. Call init() once, then use the play* methods.
  */
+export type SoundtrackMode = "classic" | "epic";
+
 export class SoundManager {
     private _ctx: AudioContext | null = null;
     private _masterGain!: GainNode;
+    private _musicGain!: GainNode;
+    private _sfxGain!: GainNode;
     private _musicLoop: ReturnType<typeof setInterval> | null = null;
     private _pigOinkLoop: ReturnType<typeof setInterval> | null = null;
     private _started = false;
+    private _musicVolume = 0.65;
+    private _sfxVolume = 0.7;
+    private _soundtrackMode: SoundtrackMode = "classic";
+    private _overrideMode: SoundtrackMode | null = null;
 
     // ── Bootstrap ─────────────────────────────────────────
 
@@ -21,10 +29,61 @@ export class SoundManager {
 
         this._ctx = new AudioContext();
         this._masterGain = this._ctx.createGain();
-        this._masterGain.gain.value = 0.7;
+        this._masterGain.gain.value = 1;
         this._masterGain.connect(this._ctx.destination);
 
+        this._musicGain = this._ctx.createGain();
+        this._sfxGain = this._ctx.createGain();
+        this._musicGain.connect(this._masterGain);
+        this._sfxGain.connect(this._masterGain);
+
+        this.setMusicVolume(this._musicVolume);
+        this.setSfxVolume(this._sfxVolume);
+
         this._startBackgroundMusic();
+    }
+
+    setSoundtrackMode(mode: SoundtrackMode): void {
+        this._soundtrackMode = mode;
+        if (!this._overrideMode) {
+            this._restartBackgroundMusic();
+        }
+    }
+
+    get soundtrackMode(): SoundtrackMode {
+        return this._soundtrackMode;
+    }
+
+    playCreditsTheme(): void {
+        this._overrideMode = "epic";
+        this._restartBackgroundMusic();
+    }
+
+    clearCreditsThemeOverride(): void {
+        this._overrideMode = null;
+        this._restartBackgroundMusic();
+    }
+
+    setMusicVolume(volume: number): void {
+        this._musicVolume = this._clamp01(volume);
+        if (this._musicGain) {
+            this._musicGain.gain.value = this._musicVolume;
+        }
+    }
+
+    setSfxVolume(volume: number): void {
+        this._sfxVolume = this._clamp01(volume);
+        if (this._sfxGain) {
+            this._sfxGain.gain.value = this._sfxVolume;
+        }
+    }
+
+    get musicVolume(): number {
+        return this._musicVolume;
+    }
+
+    get sfxVolume(): number {
+        return this._sfxVolume;
     }
 
     dispose(): void {
@@ -40,6 +99,12 @@ export class SoundManager {
     private _startBackgroundMusic(): void {
         if (!this._ctx) return;
 
+        const mode = this._overrideMode ?? this._soundtrackMode;
+        if (mode === "epic") {
+            this._startEpicBackgroundMusic();
+            return;
+        }
+
         // Pentatonic scale notes (Hz) — cheerful, hard to sound bad
         const notes = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3];
         // Melody pattern — indices into notes array
@@ -51,10 +116,34 @@ export class SoundManager {
         const tick = () => {
             if (!this._ctx || this._ctx.state === "closed") return;
             const freq = notes[melody[step % melody.length]];
-            this._playTone(freq, stepSec * 0.7, 0.18, "square");
+            this._playTone(freq, stepSec * 0.7, 0.18, "square", "music");
             // Bass note every 4 steps
             if (step % 4 === 0) {
-                this._playTone(notes[melody[step % melody.length]] / 2, stepSec * 1.8, 0.12, "triangle");
+                this._playTone(notes[melody[step % melody.length]] / 2, stepSec * 1.8, 0.12, "triangle", "music");
+            }
+            step++;
+        };
+
+        tick();
+        this._musicLoop = setInterval(tick, stepSec * 1000);
+    }
+
+    private _startEpicBackgroundMusic(): void {
+        if (!this._ctx) return;
+
+        const notes = [130.8, 164.8, 196.0, 220.0, 261.6, 329.6, 392.0, 440.0];
+        const melody = [0, 2, 4, 6, 7, 6, 4, 2, 0, 3, 5, 7, 6, 5, 3, 2];
+        const bpm = 96;
+        const stepSec = 60 / bpm / 2;
+
+        let step = 0;
+        const tick = () => {
+            if (!this._ctx || this._ctx.state === "closed") return;
+            const freq = notes[melody[step % melody.length]];
+            this._playTone(freq, stepSec * 1.2, 0.18, "sawtooth", "music");
+            this._playTone(freq / 2, stepSec * 1.9, 0.11, "triangle", "music");
+            if (step % 4 === 0) {
+                this._playTone(freq * 2, stepSec * 0.55, 0.08, "square", "music");
             }
             step++;
         };
@@ -75,7 +164,7 @@ export class SoundManager {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(this._masterGain);
+        gain.connect(this._sfxGain);
 
         osc.type = "sawtooth";
         osc.frequency.setValueAtTime(800, now);
@@ -99,7 +188,7 @@ export class SoundManager {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(this._masterGain);
+        gain.connect(this._sfxGain);
 
         osc.type = "sine";
         osc.frequency.setValueAtTime(180, now);
@@ -123,7 +212,7 @@ export class SoundManager {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(this._masterGain);
+        gain.connect(this._sfxGain);
 
         osc.type = "sine";
         osc.frequency.setValueAtTime(300, now);
@@ -137,7 +226,7 @@ export class SoundManager {
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
         osc2.connect(gain2);
-        gain2.connect(this._masterGain);
+        gain2.connect(this._sfxGain);
         osc2.type = "square";
         osc2.frequency.setValueAtTime(900, now);
         osc2.frequency.exponentialRampToValueAtTime(400, now + 0.15);
@@ -165,7 +254,7 @@ export class SoundManager {
 
             osc.connect(filter);
             filter.connect(gain);
-            gain.connect(this._masterGain);
+            gain.connect(this._sfxGain);
 
             osc.type = "sawtooth";
             const t = now + i * 0.12;
@@ -209,6 +298,7 @@ export class SoundManager {
         duration: number,
         volume: number,
         type: OscillatorType,
+        channel: "music" | "sfx" = "sfx",
     ): void {
         if (!this._ctx) return;
         const ctx = this._ctx;
@@ -216,7 +306,7 @@ export class SoundManager {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(this._masterGain);
+        gain.connect(channel === "music" ? this._musicGain : this._sfxGain);
         osc.type = type;
         osc.frequency.value = freq;
         gain.gain.setValueAtTime(volume, now);
@@ -253,8 +343,22 @@ export class SoundManager {
 
         source.connect(filter);
         filter.connect(gain);
-        gain.connect(this._masterGain);
+        gain.connect(this._sfxGain);
         source.start(now);
         source.stop(now + duration);
+    }
+
+    private _clamp01(value: number): number {
+        if (!Number.isFinite(value)) return 0;
+        return Math.max(0, Math.min(1, value));
+    }
+
+    private _restartBackgroundMusic(): void {
+        if (!this._started) return;
+        if (this._musicLoop) {
+            clearInterval(this._musicLoop);
+            this._musicLoop = null;
+        }
+        this._startBackgroundMusic();
     }
 }

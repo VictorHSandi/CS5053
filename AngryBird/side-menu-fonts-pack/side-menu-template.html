@@ -1,0 +1,43 @@
+<div id="side-panel" aria-label="Game status panel">
+    <h1>COIN<br>COLLECTOR</h1>
+
+    <div class="panel-section">
+        <h2>Status</h2>
+        <div class="stat-row">
+            <span class="stat-label">Coins</span>
+            <span class="stat-value">
+                <span id="score" class="gold">0</span>
+                <span class="dim">/</span>
+                <span id="total" class="gold">0</span>
+            </span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Elixir</span>
+            <span class="stat-value" id="elixir-status"><span class="red">X Missing</span></span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Jump</span>
+            <span class="stat-value" id="jump-status"><span class="dim">Normal</span></span>
+        </div>
+    </div>
+
+    <div class="panel-section">
+        <h2>Controls</h2>
+        <div class="key-grid">
+            <span class="key-badge">W A S D</span> <span class="key-desc">Move</span>
+            <span class="key-badge">Q / E</span> <span class="key-desc">Turn L / R</span>
+            <span class="key-badge">SPACE</span> <span class="key-desc">Jump</span>
+            <span class="key-badge">R</span> <span class="key-desc">180 deg Spin</span>
+            <span class="key-badge">F</span> <span class="key-desc">Replay (on win)</span>
+        </div>
+    </div>
+
+    <div class="panel-section">
+        <h2>Objectives</h2>
+        <div class="objective-item">Jump to collect coins</div>
+        <div class="objective-item">Find the <span class="green">Elixir</span> to boost jump</div>
+        <div class="objective-item">Reach the <span class="cyan">Top Coin</span></div>
+        <div class="objective-item">Avoid <span class="red">red hazards</span></div>
+        <div class="objective-item" id="message-row"><span id="message" class="dim"></span></div>
+    </div>
+</div>

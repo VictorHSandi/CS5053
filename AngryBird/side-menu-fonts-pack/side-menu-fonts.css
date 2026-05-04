@@ -1,0 +1,164 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap");
+
+:root {
+    --hud-bg-top: #0e1020;
+    --hud-bg-bottom: #141830;
+    --hud-border: #222;
+    --hud-divider: #1c2040;
+    --hud-text: #b0b8c8;
+    --hud-label: #7080a0;
+    --hud-heading: #5a6a8a;
+    --hud-gold: #ffd700;
+    --hud-cyan: #00ffff;
+    --hud-green: #00ff88;
+    --hud-red: #ff4444;
+    --hud-dim: #4a5a70;
+}
+
+.hud-layout {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    color: var(--hud-text);
+    font-family: "Share Tech Mono", "Courier New", monospace;
+}
+
+.hud-content {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#side-panel {
+    width: 340px;
+    background: linear-gradient(180deg, var(--hud-bg-top) 0%, var(--hud-bg-bottom) 100%);
+    border: 2px solid var(--hud-border);
+    border-left: 1px solid #1a1e30;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+#side-panel h1 {
+    font-family: "Press Start 2P", monospace;
+    font-size: 13px;
+    color: var(--hud-gold);
+    text-align: center;
+    margin-bottom: 18px;
+    line-height: 1.5;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.panel-section {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--hud-divider);
+}
+
+.panel-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.panel-section h2 {
+    font-family: "Press Start 2P", monospace;
+    font-size: 8px;
+    color: var(--hud-heading);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.stat-label {
+    color: var(--hud-label);
+}
+
+.stat-value {
+    color: #d0d8e8;
+    font-weight: bold;
+}
+
+.key-grid {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 5px 10px;
+    font-size: 12px;
+}
+
+.key-badge {
+    display: inline-block;
+    background: #1a2040;
+    border: 1px solid #2a3060;
+    border-radius: 3px;
+    padding: 2px 0;
+    text-align: center;
+    font-family: "Press Start 2P", monospace;
+    font-size: 8px;
+    color: #8898c0;
+}
+
+.key-desc {
+    color: #6878a0;
+    line-height: 1.7;
+    font-size: 11px;
+}
+
+.objective-item {
+    margin-bottom: 5px;
+    font-size: 12px;
+    padding-left: 14px;
+    position: relative;
+}
+
+.objective-item::before {
+    content: ">";
+    position: absolute;
+    left: 0;
+    color: #3a4a70;
+}
+
+.gold {
+    color: var(--hud-gold);
+}
+
+.cyan {
+    color: var(--hud-cyan);
+}
+
+.green {
+    color: var(--hud-green);
+}
+
+.red {
+    color: var(--hud-red);
+}
+
+.dim {
+    color: var(--hud-dim);
+}
+
+.win {
+    color: #00ff00;
+    font-family: "Press Start 2P", monospace;
+    font-size: 11px;
+}
+
+@media (max-width: 1024px) {
+    .hud-layout {
+        flex-direction: column;
+    }
+
+    #side-panel {
+        width: 100%;
+        border-left: 2px solid var(--hud-border);
+        border-top: 1px solid #1a1e30;
+    }
+}

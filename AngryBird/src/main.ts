@@ -9,6 +9,7 @@ import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Meshes/meshBuilder";
 import "@babylonjs/core/Physics/v2/physicsEngineComponent";      // registers scene.enablePhysics()
 import "@babylonjs/core/Physics/joinedPhysicsEngineComponent";   // hooks physics into render loop
+import "./ui/main-menu.css";
 
 import { Game } from "./game/Game";
 

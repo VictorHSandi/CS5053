@@ -2,6 +2,8 @@
  * Finite set of game-play states used by Game and consumed by all systems.
  */
 export enum GameState {
+    /** Main menu is shown; gameplay systems are paused. */
+    MainMenu = "mainMenu",
     /** Player is dragging the sling / choosing aim. */
     Aiming = "aiming",
     /** Brief camera transition from aim view to follow cam. */
@@ -22,7 +24,7 @@ export type StateChangeListener = (prev: GameState, next: GameState) => void;
  * Simple observable state machine for the game loop.
  */
 export class GameStateManager {
-    private _state: GameState = GameState.Aiming;
+    private _state: GameState = GameState.MainMenu;
     private _listeners: StateChangeListener[] = [];
 
     get state(): GameState {

@@ -27,6 +27,8 @@ export interface CollisionResult {
     targetsHit: Target[];
     obstaclesHit: Obstacle[];
     totalScore: number;
+    targetScore: number;
+    obstacleScore: number;
     titanCoreConsumed: boolean;
 }
 
@@ -57,6 +59,8 @@ export class TargetSystem {
             targetsHit: [],
             obstaclesHit: [],
             totalScore: 0,
+            targetScore: 0,
+            obstacleScore: 0,
             titanCoreConsumed: false,
         };
         const nowMs = Date.now();
@@ -232,6 +236,7 @@ export class TargetSystem {
     ): void {
         if (!result.targetsHit.includes(target)) {
             result.targetsHit.push(target);
+            result.targetScore += target.scoreValue;
             result.totalScore += target.scoreValue;
         }
 
@@ -243,6 +248,7 @@ export class TargetSystem {
     private _registerObstacleDestroyed(obstacle: Obstacle, result: CollisionResult): void {
         if (result.obstaclesHit.includes(obstacle)) return;
         result.obstaclesHit.push(obstacle);
+        result.obstacleScore += 25;
         result.totalScore += 25;
     }
 

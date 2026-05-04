@@ -5,6 +5,8 @@ import {
     FLIGHT_STEER_FORCE,
     FLIGHT_PITCH_FORCE,
     FLIGHT_BOOST_IMPULSE,
+    FLIGHT_MAX_ASCENT_SPEED,
+    FLIGHT_MAX_SPEED,
 } from "../utils/Constants";
 
 /**
@@ -29,7 +31,9 @@ export class FlightControlSystem {
 
         // ── Pitch adjustment (W/S or ArrowUp/ArrowDown) ─────
         if (input.keys.has("KeyW") || input.keys.has("ArrowUp")) {
-            this._applySteer(projectile, new Vector3(0, 1, 0), FLIGHT_PITCH_FORCE, dt);
+            if (projectile.velocity.y < FLIGHT_MAX_ASCENT_SPEED) {
+                this._applySteer(projectile, new Vector3(0, 1, 0), FLIGHT_PITCH_FORCE, dt);
+            }
         }
         if (input.keys.has("KeyS") || input.keys.has("ArrowDown")) {
             this._applySteer(projectile, new Vector3(0, -1, 0), FLIGHT_PITCH_FORCE, dt);
@@ -39,13 +43,27 @@ export class FlightControlSystem {
         if (input.keys.has("Space") && !projectile.boostUsed) {
             const fwd = projectile.velocity.normalizeToNew();
             projectile.velocity.addInPlace(fwd.scale(FLIGHT_BOOST_IMPULSE));
+            this._clampFlightVelocity(projectile);
             projectile.boostUsed = true;
             // Consume the key so it doesn't repeat
             input.keys.delete("Space");
         }
+
+        this._clampFlightVelocity(projectile);
     }
 
     private _applySteer(proj: Projectile, dir: Vector3, force: number, dt: number): void {
         proj.velocity.addInPlace(dir.scale(force * dt));
+    }
+
+    private _clampFlightVelocity(proj: Projectile): void {
+        if (proj.velocity.y > FLIGHT_MAX_ASCENT_SPEED) {
+            proj.velocity.y = FLIGHT_MAX_ASCENT_SPEED;
+        }
+
+        const speed = proj.velocity.length();
+        if (speed > FLIGHT_MAX_SPEED) {
+            proj.velocity.scaleInPlace(FLIGHT_MAX_SPEED / speed);
+        }
     }
 }

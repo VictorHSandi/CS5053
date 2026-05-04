@@ -4,9 +4,9 @@
 
 // ── Physics ──────────────────────────────────────────────
 export const GRAVITY = -9.81;
-export const OBSTACLE_MASS        = 35.0;   // kg base — per-material scaling is applied in Obstacle
+export const OBSTACLE_MASS = 35.0;   // kg base — per-material scaling is applied in Obstacle
 export const OBSTACLE_RESTITUTION = 0.01;   // bounciness (0 = dead stop, 1 = full bounce)
-export const OBSTACLE_FRICTION    = 0.55;   // lower grip helps blocks tip instead of sticking in place
+export const OBSTACLE_FRICTION = 0.55;   // lower grip helps blocks tip instead of sticking in place
 export const OBSTACLE_IMPULSE_MULT = 0.85; // projectile speed → impulse strength
 
 // ── Launcher / Aiming ────────────────────────────────────
@@ -24,6 +24,8 @@ export const PROJECTILE_LIFETIME = 8.0; // seconds before auto-deactivate
 export const FLIGHT_STEER_FORCE = 15.0; // lateral steering strength while keys are held
 export const FLIGHT_PITCH_FORCE = 8.0; // up/down steering strength while keys are held
 export const FLIGHT_BOOST_IMPULSE = 8.0; // one-time forward boost
+export const FLIGHT_MAX_ASCENT_SPEED = 6.0; // cap upward velocity so moon gravity cannot sustain infinite climb
+export const FLIGHT_MAX_SPEED = 38.0; // total speed clamp to keep air control bounded
 export const FLIGHT_MAX_NUDGES = 6; // legacy value, unused with continuous control
 
 // ── Targets ──────────────────────────────────────────────
