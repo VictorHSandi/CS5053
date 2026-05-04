@@ -125,6 +125,8 @@ function createBirdTexture(scene: Scene): DynamicTexture {
     ctx.fill();
 
     tex.update();
+    tex.vScale = -1;
+    tex.vOffset = 1;
     return tex;
 }
 
@@ -166,6 +168,7 @@ export class Projectile {
 
     spawn(position: Vector3): void {
         this.mesh.position = position.clone();
+        this.mesh.rotation.set(0, Math.PI, 0);
         this.mesh.isVisible = true;
         this.velocity = Vector3.Zero();
         this.active = false;

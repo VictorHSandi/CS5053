@@ -57,7 +57,8 @@ export class CreditsOverlay {
 
     private async _ensureLoaded(): Promise<void> {
         if (this._loadedText) return;
-        const response = await fetch("/credits.txt");
+        const creditsPath = `${import.meta.env.BASE_URL}credits.txt`;
+        const response = await fetch(creditsPath);
         if (!response.ok) {
             throw new Error("Failed to load credits.txt");
         }

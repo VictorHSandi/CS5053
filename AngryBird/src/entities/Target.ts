@@ -127,6 +127,8 @@ function createPigTexture(scene: Scene, id: string): DynamicTexture {
     ctx.stroke();
 
     tex.update();
+    tex.vScale = -1;
+    tex.vOffset = 1;
     return tex;
 }
 

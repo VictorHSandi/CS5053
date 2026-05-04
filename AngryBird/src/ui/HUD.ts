@@ -15,20 +15,22 @@ export class HUD {
     private _targetsText: TextBlock;
     private _powerupText: TextBlock;
     private _controlsSection: StackPanel;
+    private _hudVisible = true;
+    private _sidebarVisible = true;
     private _controlsVisible = true;
 
     constructor(private _ui: AdvancedDynamicTexture) {
         this._shell = new Rectangle("hudShell");
-        this._shell.width = "420px";
-        this._shell.height = "500px";
+        this._shell.width = "382px";
+        this._shell.height = "532px";
         this._shell.thickness = 2;
         this._shell.cornerRadius = 3;
         this._shell.color = "#29325c";
         this._shell.background = "#0f1430e6";
         this._shell.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         this._shell.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        this._shell.left = "14px";
-        this._shell.top = "14px";
+        this._shell.left = "16px";
+        this._shell.top = "16px";
         this._ui.addControl(this._shell);
 
         const panel = new StackPanel("hudPanel");
@@ -37,8 +39,8 @@ export class HUD {
         panel.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
         panel.paddingLeftInPixels = 14;
         panel.paddingTopInPixels = 12;
-        panel.paddingBottomInPixels = 16;
-        panel.width = "390px";
+        panel.paddingBottomInPixels = 12;
+        panel.width = "350px";
         this._shell.addControl(panel);
 
         this._addHeader(panel, "STATUS");
@@ -50,18 +52,21 @@ export class HUD {
 
         this._controlsSection = new StackPanel("hudControlsSection");
         this._controlsSection.isVertical = true;
-        this._controlsSection.width = "372px";
+        this._controlsSection.width = "344px";
         panel.addControl(this._controlsSection);
 
-        this._addGap(this._controlsSection, 8);
+        this._addGap(this._controlsSection, 6);
         this._addDivider(this._controlsSection);
-        this._addGap(this._controlsSection, 8);
+        this._addGap(this._controlsSection, 6);
         this._addHeader(this._controlsSection, "CONTROLS");
         this._addWASDControlRow(this._controlsSection, "Steer");
         this._addControlRow(this._controlsSection, "ARROWS", "Steer (alt)");
         this._addControlRow(this._controlsSection, "SPACE", "Boost (once)");
         this._addControlRow(this._controlsSection, "DRAG", "Aim + launch");
         this._addControlRow(this._controlsSection, "ESC", "Options / resume");
+        this._addControlRow(this._controlsSection, "H", "Toggle sidebar");
+
+        this._syncVisibility();
     }
 
     update(
@@ -82,13 +87,23 @@ export class HUD {
     }
 
     setVisible(visible: boolean): void {
-        this._shell.isVisible = visible;
+        this._hudVisible = visible;
+        this._syncVisibility();
+    }
+
+    toggleSidebar(): void {
+        this._sidebarVisible = !this._sidebarVisible;
+        this._syncVisibility();
     }
 
     setControlsVisible(visible: boolean): void {
         this._controlsVisible = visible;
         this._controlsSection.isVisible = visible;
-        this._shell.height = visible ? "500px" : "230px";
+        this._shell.height = visible ? "532px" : "228px";
+    }
+
+    private _syncVisibility(): void {
+        this._shell.isVisible = this._hudVisible && this._sidebarVisible;
     }
 
     private _addHeader(parent: StackPanel, text: string): TextBlock {
@@ -98,6 +113,7 @@ export class HUD {
         tb.fontFamily = "'Press Start 2P', monospace";
         tb.fontSize = 11;
         tb.height = "22px";
+        tb.paddingLeftInPixels = 6;
         tb.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         tb.paddingBottomInPixels = 2;
         parent.addControl(tb);
@@ -107,7 +123,7 @@ export class HUD {
     private _addGap(parent: StackPanel, height: number): void {
         const gap = new Rectangle();
         gap.height = `${height}px`;
-        gap.width = "372px";
+        gap.width = "344px";
         gap.thickness = 0;
         gap.background = "transparent";
         parent.addControl(gap);
@@ -116,7 +132,7 @@ export class HUD {
     private _addDivider(parent: StackPanel): void {
         const divider = new Rectangle();
         divider.height = "1px";
-        divider.width = "372px";
+        divider.width = "344px";
         divider.thickness = 0;
         divider.background = "#1f2a52";
         parent.addControl(divider);
@@ -125,9 +141,10 @@ export class HUD {
     private _addStatusRow(parent: StackPanel, label: string, value: string, valueColor: string): TextBlock {
         const row = new StackPanel();
         row.isVertical = false;
-        row.width = "372px";
+        row.width = "344px";
         row.height = "31px";
         row.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        row.paddingLeftInPixels = 6;
         row.paddingBottomInPixels = 2;
         parent.addControl(row);
 
@@ -136,7 +153,7 @@ export class HUD {
         labelText.color = "#7b88b3";
         labelText.fontFamily = "'Share Tech Mono', 'Courier New', monospace";
         labelText.fontSize = 17;
-        labelText.width = "132px";
+        labelText.width = "112px";
         labelText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         row.addControl(labelText);
 
@@ -145,7 +162,7 @@ export class HUD {
         valueText.color = valueColor;
         valueText.fontFamily = "'Share Tech Mono', 'Courier New', monospace";
         valueText.fontSize = 17;
-        valueText.width = "232px";
+        valueText.width = "216px";
         valueText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         valueText.paddingLeftInPixels = 12;
         valueText.resizeToFit = true;
@@ -157,16 +174,17 @@ export class HUD {
     private _addControlRow(parent: StackPanel, keyText: string, description: string): void {
         const row = new StackPanel();
         row.isVertical = false;
-        row.width = "372px";
+        row.width = "344px";
         row.height = "44px";
         row.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        row.paddingLeftInPixels = 6;
         row.paddingBottomInPixels = 4;
         parent.addControl(row);
 
         const keyBadge = new Rectangle();
-        keyBadge.width = "132px";
+        keyBadge.width = "116px";
         keyBadge.height = "34px";
-        keyBadge.cornerRadius = 4;
+        keyBadge.cornerRadius = 6;
         keyBadge.thickness = 1;
         keyBadge.color = "#30448f";
         keyBadge.background = "#1a2349";
@@ -176,8 +194,9 @@ export class HUD {
         const keyLabel = new TextBlock();
         keyLabel.text = keyText;
         keyLabel.color = "#9bb2ee";
-        keyLabel.fontFamily = "'Press Start 2P', monospace";
-        keyLabel.fontSize = 11;
+        keyLabel.fontFamily = "'Share Tech Mono', 'Courier New', monospace";
+        keyLabel.fontSize = 21;
+        keyLabel.paddingLeftInPixels = 2;
         keyLabel.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
         keyBadge.addControl(keyLabel);
 
@@ -185,10 +204,10 @@ export class HUD {
         desc.text = description;
         desc.color = "#8190bc";
         desc.fontFamily = "'Share Tech Mono', 'Courier New', monospace";
-        desc.fontSize = 16;
-        desc.width = "226px";
+        desc.fontSize = 15;
+        desc.width = "220px";
         desc.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-        desc.paddingLeftInPixels = 14;
+        desc.paddingLeftInPixels = 8;
         desc.resizeToFit = true;
         row.addControl(desc);
     }
@@ -196,16 +215,17 @@ export class HUD {
     private _addWASDControlRow(parent: StackPanel, description: string): void {
         const row = new StackPanel();
         row.isVertical = false;
-        row.width = "372px";
+        row.width = "344px";
         row.height = "68px";
         row.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        row.paddingLeftInPixels = 6;
         row.paddingBottomInPixels = 6;
         parent.addControl(row);
 
         const keyboardBadge = new Rectangle();
-        keyboardBadge.width = "132px";
+        keyboardBadge.width = "116px";
         keyboardBadge.height = "58px";
-        keyboardBadge.cornerRadius = 4;
+        keyboardBadge.cornerRadius = 6;
         keyboardBadge.thickness = 1;
         keyboardBadge.color = "#30448f";
         keyboardBadge.background = "#1a2349";
@@ -214,7 +234,7 @@ export class HUD {
 
         const keyboardStack = new StackPanel();
         keyboardStack.isVertical = true;
-        keyboardStack.width = "126px";
+        keyboardStack.width = "108px";
         keyboardStack.height = "52px";
         keyboardStack.paddingTopInPixels = 3;
         keyboardBadge.addControl(keyboardStack);
@@ -237,10 +257,10 @@ export class HUD {
         desc.text = description;
         desc.color = "#8190bc";
         desc.fontFamily = "'Share Tech Mono', 'Courier New', monospace";
-        desc.fontSize = 16;
-        desc.width = "226px";
+        desc.fontSize = 15;
+        desc.width = "220px";
         desc.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-        desc.paddingLeftInPixels = 14;
+        desc.paddingLeftInPixels = 8;
         row.addControl(desc);
     }
 
@@ -257,8 +277,8 @@ export class HUD {
         const text = new TextBlock();
         text.text = label;
         text.color = "#a5bbf5";
-        text.fontFamily = "'Press Start 2P', monospace";
-        text.fontSize = 9;
+        text.fontFamily = "'Share Tech Mono', 'Courier New', monospace";
+        text.fontSize = 16;
         key.addControl(text);
     }
 }

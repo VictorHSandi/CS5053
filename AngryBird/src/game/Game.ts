@@ -303,6 +303,10 @@ export class Game {
             }
         }
 
+        if (state !== GameState.MainMenu && this._input.keysJustPressed.has("KeyH")) {
+            this._ui.hud.toggleSidebar();
+        }
+
         if (state === GameState.MainMenu) {
             this._input.endFrame();
             return;

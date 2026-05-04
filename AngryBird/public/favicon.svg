@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Anger Ball bird icon">
+  <defs>
+    <radialGradient id="birdRed" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f46a6a"/>
+      <stop offset="100%" stop-color="#b81a1a"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="34" r="24" fill="url(#birdRed)" stroke="#7a0000" stroke-width="2"/>
+  <circle cx="24" cy="30" r="6" fill="#ffffff"/>
+  <circle cx="40" cy="30" r="6" fill="#ffffff"/>
+  <circle cx="24" cy="30" r="2.3" fill="#111111"/>
+  <circle cx="40" cy="30" r="2.3" fill="#111111"/>
+  <polygon points="32,35 24,40 40,40" fill="#f0a020" stroke="#a06000" stroke-width="1"/>
+  <path d="M18 18 L28 15 L22 24 Z" fill="#2a0000"/>
+  <path d="M46 18 L36 15 L42 24 Z" fill="#2a0000"/>
+</svg>
