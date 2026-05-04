@@ -1,5 +1,5 @@
 /**
- * SoundManager — all game audio generated procedurally via Web Audio API.
+ * SoundManager handles runtime-created game audio with the Web Audio API.
  * No external files needed. Call init() once, then use the play* methods.
  */
 export type SoundtrackMode = "classic" | "epic";

@@ -1,8 +1,8 @@
 # Angry Bird 3D
 
-A browser game prototype inspired by **Angry Birds**, built with **Babylon.js** and **TypeScript**.
+A browser game inspired by **Angry Birds**, built with **Babylon.js** and **TypeScript**.
 
-The twist: you aim in a classic side-on 2D view, then the camera swoops into a **3D first-person / behind-the-projectile POV** as the bird flies through a fully 3D environment with slight mid-air control.
+You aim in a classic side-on 2D view, then the camera transitions into a **3D behind-the-projectile view** during flight.
 
 ---
 
@@ -15,11 +15,11 @@ The twist: you aim in a classic side-on 2D view, then the camera swoops into a *
 | **Mid-air control** | Subtle WASD / arrow-key nudges + one-time boost (Space) |
 | **Destructible targets** | Green "pig" spheres with per-target health and score values |
 | **Destructible structures** | Wooden-style box obstacles that can be smashed |
-| **Data-driven levels** | Levels defined as plain config objects — easy to add more |
+| **Data-driven levels** | Levels are plain config objects, so adding new stages is straightforward |
 | **Star rating system** | 1–3 stars based on score (targets, shot economy, time bonus) |
 | **Win / Lose screens** | Score breakdown, star display, retry and next-level buttons |
 | **HUD** | Level name, shots used, score, targets remaining |
-| **Multiple levels** | 3 sample levels included, progressively harder |
+| **Multiple levels** | 8 levels included with increasing difficulty |
 
 ---
 
@@ -81,6 +81,44 @@ npm run preview
 
 ---
 
+## Deploy To GitHub Pages (One Push)
+
+This repository is configured for one-push deploys with GitHub Actions.
+
+### Included setup
+
+- Workflow file: `.github/workflows/deploy-pages.yml`
+- Auto-deploy trigger: every push to `main`
+- Vite `base` path auto-detection for:
+    - Project pages: `https://<user>.github.io/<repo>/`
+    - User/org pages repo (`<user>.github.io`): `https://<user>.github.io/`
+
+### One-time setup in GitHub
+
+1. Open your repository on GitHub.
+2. Go to Settings > Pages.
+3. Under Build and deployment, set Source to GitHub Actions.
+
+After that, every push to `main` deploys automatically.
+
+### First deploy
+
+```bash
+git add .
+git commit -m "Set up GitHub Pages deploy"
+git push origin main
+```
+
+Track progress in the Actions tab. The deployed URL appears in the deploy job output.
+
+### Public vs Private repos
+
+- Public repo: works on all plans.
+- Private repo: works only if your GitHub plan includes Pages for private repositories (Pro/Team/Enterprise).
+    - On GitHub Free, Pages deployment generally requires a public repo.
+
+---
+
 ## Project Architecture
 
 ```
@@ -127,23 +165,6 @@ src/
 
 ---
 
-## Where to Go Next
-
-Here are natural extension points, roughly in order of impact:
-
-1. **More projectile types** — add `ProjectileConfig.type` variants (e.g. "splitter", "bomber") and wire special abilities in `FlightControlSystem`.
-2. **Particle effects** — use `ParticleSystem` for impact explosions, dust clouds, and trail effects.
-3. **Sound** — the architecture already has clear trigger points (`_doLaunch`, `target.hit`, `target.destroy`); hook in `Sound` objects there.
-4. **Richer structures** — stack boxes with simple joint/stacking logic, or add plank entities.
-5. **Level editor** — since levels are JSON-like configs, a small editor UI that serialises to `LevelDef` would be straightforward.
-6. **Local progression** — persist best scores and star ratings in `localStorage`.
-7. **Mobile touch** — pointer events already work; add on-screen virtual buttons for flight control.
-8. **Physics engine** — swap the custom Euler integration for Babylon's built-in physics (Havok / Cannon) for more realistic collisions and stacking.
-9. **Visual polish** — PBR materials, skybox, ground textures, animated pig faces.
-10. **Level select screen** — a menu showing all levels with earned stars.
-
----
-
 ## License
 
-MIT — do whatever you want with it.
+Licensed under the MIT License.

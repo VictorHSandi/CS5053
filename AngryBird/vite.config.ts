@@ -1,7 +1,14 @@
 import { defineConfig } from "vite";
 
+const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "";
+const isUserOrOrgPagesRepo = repoName.toLowerCase().endsWith(".github.io");
+const pagesBase = process.env.GITHUB_ACTIONS
+    ? (isUserOrOrgPagesRepo || repoName.length === 0 ? "/" : `/${repoName}/`)
+    : "/";
+
 export default defineConfig({
     root: ".",
+    base: pagesBase,
     publicDir: "public",
     build: {
         outDir: "dist",
