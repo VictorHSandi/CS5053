@@ -8,6 +8,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { InputController } from "./InputController";
 import {
     LAUNCHER_MAX_PULL,
+    LAUNCHER_PULL_INPUT_FRACTION,
     LAUNCHER_POWER_MULT,
     GRAVITY,
     TRAJECTORY_SEGMENTS,
@@ -110,7 +111,7 @@ export class LauncherSystem {
     update(input: InputController, gravity: number = GRAVITY): void {
         if (input.pointerDown) {
             // Map vertical drag to pull distance (drag down = more pull)
-            const rawPull = input.dragDY / (input.canvasHeight * 0.35);
+            const rawPull = input.dragDY / (input.canvasHeight * LAUNCHER_PULL_INPUT_FRACTION);
             this.pullDistance = clamp(rawPull, 0, 1) * LAUNCHER_MAX_PULL;
 
             // 2D-style aiming: direction is fixed, drag only controls power.
@@ -155,7 +156,7 @@ export class LauncherSystem {
         }
 
         // On moon gravity use longer time step to show the full extended arc
-        const timeStep = gravity === -1.62 
+        const timeStep = gravity === -1.62
             ? TRAJECTORY_TIME_STEP * 3.5  // moon — much longer arc
             : TRAJECTORY_TIME_STEP;       // earth — normal
 

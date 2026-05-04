@@ -10,8 +10,9 @@ export const OBSTACLE_FRICTION = 0.55;   // lower grip helps blocks tip instead 
 export const OBSTACLE_IMPULSE_MULT = 1.15; // projectile speed → impulse strength
 
 // ── Launcher / Aiming ────────────────────────────────────
-export const LAUNCHER_MAX_PULL = 3.0; // max drag distance in world units
-export const LAUNCHER_POWER_MULT = 8.6; // pull distance → launch speed
+export const LAUNCHER_PULL_INPUT_FRACTION = 0.4; // fraction of screen height needed to reach full pull
+export const LAUNCHER_MAX_PULL = 5.35; // max drag distance in world units
+export const LAUNCHER_POWER_MULT = 8.9; // pull distance → launch speed
 export const TRAJECTORY_SEGMENTS = 60; // dots in trajectory preview
 export const TRAJECTORY_TIME_STEP = 0.12; // seconds per segment
 
