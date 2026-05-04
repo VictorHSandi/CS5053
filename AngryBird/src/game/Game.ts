@@ -1,5 +1,5 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-
+import { SoundManager } from "../systems/SoundSystem";
 import { SceneManager } from "../scenes/SceneManager";
 import { setSkyboxVisible } from "../scenes/SceneSetup";
 import { GameStateManager, GameState } from "./GameStateManager";
@@ -35,6 +35,7 @@ export class Game {
     private _powerups: PowerupSystem;
     private _score: ScoreSystem;
     private _gravity: GravitySystem;
+    private _sound: SoundManager;
 
     // Data
     private _levels: LevelManager;
@@ -65,6 +66,12 @@ export class Game {
         this._levels = new LevelManager();
         this._ui = new UIManager(scene);
         this._gravity = new GravitySystem(scene, this._ui.hud);
+        this._sound = new SoundManager();
+
+        // Init audio on first pointer interaction (browser autoplay policy)
+        canvas.addEventListener("pointerdown", () => {
+            this._sound.init();
+        }, { once: true });
 
         this._ui.winScreen.onNext = () => this._advanceLevel();
         this._ui.winScreen.onRetry = () => this._restartLevel();
@@ -98,6 +105,10 @@ export class Game {
         setSkyboxVisible(false);
         this._ui.hideOverlays();
         this._state.transition(GameState.Aiming);
+
+        // Start random pig oinks while pigs are alive
+        this._sound.stopPigOinks();
+        this._sound.startPigOinks(() => this._levels.aliveTargetCount);
     }
 
     private _computeAimMaxX(def: LevelDef): number {
@@ -218,7 +229,6 @@ export class Game {
     }
 
     private _updateAiming(): void {
-        // Evaluate release before update() because update() resets pull when pointerDown=false.
         if (this._input.pointerJustReleased && this._launcher.pullDistance > 0.15) {
             this._doLaunch();
             return;
@@ -228,6 +238,9 @@ export class Game {
 
     private _doLaunch(): void {
         setSkyboxVisible(true);
+
+        // Play launch sound
+        this._sound.playLaunch();
 
         const vel = this._launcher.launchVelocity.clone();
         this._titanCoreActiveThisShot = this._titanCoreReadyNextShot;
@@ -276,7 +289,6 @@ export class Game {
     }
 
     private _updateEvaluating(dt: number): void {
-        // Allow structural collapses to keep affecting targets after projectile stops.
         this._runCollisions();
 
         this._evaluateDelay += dt;
@@ -312,8 +324,17 @@ export class Game {
             this._levels.obstacles,
             this._titanCoreActiveThisShot,
         );
+
         if (result.totalScore > 0) {
             this._score.addScore(result.totalScore);
+        }
+
+        // Play sound effects based on what was hit this frame
+        if (result.targetsHit.length > 0) {
+            this._sound.playHitPig();
+        }
+        if (result.obstaclesHit.length > 0) {
+            this._sound.playHitObstacle();
         }
 
         if (result.titanCoreConsumed) {
