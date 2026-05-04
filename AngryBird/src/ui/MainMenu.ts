@@ -167,11 +167,14 @@ export class MainMenu {
         button.textContent = text;
     }
 
-    setLevelHighScores(scores: number[]): void {
+    setLevelHighScores(scores: number[], stars: number[]): void {
         scores.forEach((score, index) => {
             const slot = document.getElementById(`menu-level-score-${index + 1}`);
-            if (!slot) return;
+            const starSlot = document.getElementById(`menu-level-stars-${index + 1}`);
+            if (!slot || !starSlot) return;
             slot.textContent = `High Score: ${Math.max(0, Math.round(score))}`;
+            const starCount = Math.max(0, Math.min(3, stars[index] ?? 0));
+            starSlot.textContent = `${"★".repeat(starCount)}${"☆".repeat(3 - starCount)}`;
         });
     }
 

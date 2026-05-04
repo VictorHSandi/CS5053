@@ -27,6 +27,7 @@ export interface ScoreBreakdown {
     barOverflowScore: number;
     barPenaltyScore: number;
     barSegments: ScoreBarSegment[];
+    starThresholds: [number, number, number];
 }
 
 /**
@@ -65,6 +66,27 @@ export class ScoreSystem {
         return this.targetScore + this.obstacleScore;
     }
 
+    static getStarThresholds(levelDef: LevelDef): [number, number, number] {
+        const maxDestructionScore = levelDef.targets.reduce((sum, target) => sum + (target.scoreValue ?? 100), 0)
+            + (levelDef.obstacles?.length ?? 0) * 25;
+        const shotTierValue = maxDestructionScore + 150;
+
+        const oneStar = Math.round(maxDestructionScore * 0.35 + shotTierValue * 1.0);
+        const twoStar = Math.round(maxDestructionScore * 0.65 + shotTierValue * Math.max(1, Math.ceil(levelDef.maxShots * 0.3)));
+        const threeStar = Math.round(maxDestructionScore * 0.95 + shotTierValue * Math.max(1, Math.ceil(levelDef.maxShots * 0.5)));
+
+        return [oneStar, Math.max(oneStar + 1, twoStar), Math.max(twoStar + 1, threeStar)];
+    }
+
+    static getStarsForScore(levelDef: LevelDef, score: number): number {
+        const [oneStar, twoStar, threeStar] = ScoreSystem.getStarThresholds(levelDef);
+        let stars = 0;
+        if (score >= oneStar) stars = 1;
+        if (score >= twoStar) stars = 2;
+        if (score >= threeStar) stars = 3;
+        return stars;
+    }
+
     /** Compute the final breakdown including high-score comparison. */
     finalise(levelDef: LevelDef, previousHighScore: number): ScoreBreakdown {
         const destructionScore = this.targetScore + this.obstacleScore;
@@ -77,15 +99,11 @@ export class ScoreSystem {
         const totalScore = Math.max(0, destructionScore + shotScore + powerupAdjustment);
         const maxScore = Math.max(0, (levelDef.maxShots * shotTierValue) + maxDestructionScore);
 
-        const thresholds: [number, number, number] = [
-            Math.round(maxScore * 0.35),
-            Math.round(maxScore * 0.6),
-            Math.round(maxScore * 0.82),
-        ];
-        let stars = 0;
-        if (totalScore >= thresholds[0]) stars = 1;
-        if (totalScore >= thresholds[1]) stars = 2;
-        if (totalScore >= thresholds[2]) stars = 3;
+        const thresholds = ScoreSystem.getStarThresholds(levelDef);
+        let stars = this.shotsUsed <= 1 ? 3 : ScoreSystem.getStarsForScore(levelDef, totalScore);
+        if (stars < 3 && totalScore >= thresholds[2]) {
+            stars = 3;
+        }
 
         const highScore = Math.max(previousHighScore, totalScore);
         const isNewHighScore = totalScore > previousHighScore;
@@ -140,6 +158,7 @@ export class ScoreSystem {
             barOverflowScore,
             barPenaltyScore,
             barSegments,
+            starThresholds: thresholds,
         };
     }
 }

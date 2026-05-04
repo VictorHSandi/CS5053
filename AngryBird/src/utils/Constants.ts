@@ -4,14 +4,14 @@
 
 // ── Physics ──────────────────────────────────────────────
 export const GRAVITY = -9.81;
-export const OBSTACLE_MASS = 35.0;   // kg base — per-material scaling is applied in Obstacle
+export const OBSTACLE_MASS = 30.0;   // kg base — per-material scaling is applied in Obstacle
 export const OBSTACLE_RESTITUTION = 0.01;   // bounciness (0 = dead stop, 1 = full bounce)
 export const OBSTACLE_FRICTION = 0.55;   // lower grip helps blocks tip instead of sticking in place
-export const OBSTACLE_IMPULSE_MULT = 0.85; // projectile speed → impulse strength
+export const OBSTACLE_IMPULSE_MULT = 1.15; // projectile speed → impulse strength
 
 // ── Launcher / Aiming ────────────────────────────────────
 export const LAUNCHER_MAX_PULL = 3.0; // max drag distance in world units
-export const LAUNCHER_POWER_MULT = 12.0; // pull distance → launch speed
+export const LAUNCHER_POWER_MULT = 8.6; // pull distance → launch speed
 export const TRAJECTORY_SEGMENTS = 60; // dots in trajectory preview
 export const TRAJECTORY_TIME_STEP = 0.12; // seconds per segment
 
@@ -46,6 +46,7 @@ export const BARREL_EXPLOSION_VFX_DURATION = 0.26;
 export const TITAN_CORE_OBSTACLE_DAMAGE_MULT = 6.0;
 export const TITAN_CORE_OBSTACLE_IMPULSE_MULT = 4.6;
 export const TITAN_CORE_TARGET_DAMAGE = 3.2;
+export const TITAN_CORE_TARGET_BLAST_RADIUS = 3.6;
 export const TITAN_CORE_SHOCKWAVE_RADIUS = 5.2;
 export const TITAN_CORE_SHOCKWAVE_OBSTACLE_IMPULSE = 22.0;
 export const TITAN_CORE_SHOCKWAVE_OBSTACLE_DAMAGE = 1.25;
@@ -61,6 +62,10 @@ export const CAM_AIM_TARGET_HEIGHT = 1.8; // slightly lower than camera for stro
 export const CAM_AIM_ORTHO_HALF_HEIGHT = 8; // half-height for 2D aiming projection
 export const CAM_FOLLOW_DISTANCE = 3.5;
 export const CAM_FOLLOW_HEIGHT = 1.2;
+export const CAM_DESTRUCTION_DISTANCE = 20;
+export const CAM_DESTRUCTION_HEIGHT = 8.5;
+export const CAM_DESTRUCTION_LOOKAHEAD_X = 5.5;
+export const CAM_DESTRUCTION_ORTHO_HALF_HEIGHT = 11;
 export const CAM_TRANSITION_DURATION = 0.6; // seconds
 
 // ── World ────────────────────────────────────────────────

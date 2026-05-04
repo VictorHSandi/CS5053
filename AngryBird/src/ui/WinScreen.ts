@@ -20,6 +20,7 @@ export class WinScreen {
     private _scoreBarPenalty: Rectangle;
     private _scoreBarLabel: TextBlock;
     private _scoreLegend: TextBlock;
+    private _starTargets: TextBlock;
     private _nextBtn: Button;
     private _retryBtn: Button;
     private _creditsBtn: Button;
@@ -30,8 +31,8 @@ export class WinScreen {
 
     constructor(private _ui: AdvancedDynamicTexture) {
         this._root = new Rectangle("winRoot");
-        this._root.width = "500px";
-        this._root.height = "590px";
+        this._root.width = "620px";
+        this._root.height = "860px";
         this._root.cornerRadius = 14;
         this._root.color = "#31427f";
         this._root.thickness = 2;
@@ -41,26 +42,27 @@ export class WinScreen {
 
         const panel = new StackPanel();
         panel.isVertical = true;
-        panel.paddingTopInPixels = 14;
+        panel.paddingTopInPixels = 20;
+        panel.paddingBottomInPixels = 24;
         this._root.addControl(panel);
 
-        this._title = this._text(panel, "Level Complete!", 30, "#4cff4c");
-        this._starsText = this._text(panel, "★ ★ ★", 36, "#ffd700");
-        this._summary = this._text(panel, "", 19, "#9dd1ff");
-        this._summary.height = "70px";
+        this._title = this._text(panel, "Level Complete!", 34, "#4cff4c");
+        this._starsText = this._text(panel, "★ ★ ★", 42, "#ffd700");
+        this._summary = this._text(panel, "", 22, "#9dd1ff");
+        this._summary.height = "92px";
         this._summary.textWrapping = true;
         const barWrap = new Rectangle();
-        barWrap.width = "420px";
-        barWrap.height = "34px";
+        barWrap.width = "520px";
+        barWrap.height = "40px";
         barWrap.thickness = 1;
         barWrap.color = "#31427f";
         barWrap.background = "#0d1226";
-        barWrap.paddingBottomInPixels = 10;
+        barWrap.paddingBottomInPixels = 14;
         panel.addControl(barWrap);
 
         this._scoreBarTrack = new Rectangle();
-        this._scoreBarTrack.width = "420px";
-        this._scoreBarTrack.height = "34px";
+        this._scoreBarTrack.width = "520px";
+        this._scoreBarTrack.height = "40px";
         this._scoreBarTrack.thickness = 0;
         this._scoreBarTrack.background = "transparent";
         barWrap.addControl(this._scoreBarTrack);
@@ -68,7 +70,7 @@ export class WinScreen {
         for (let index = 0; index < 3; index++) {
             const segment = new Rectangle();
             segment.thickness = 0;
-            segment.height = "34px";
+            segment.height = "40px";
             segment.width = "0px";
             segment.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
             segment.left = "0px";
@@ -78,7 +80,7 @@ export class WinScreen {
 
         this._scoreBarPenalty = new Rectangle();
         this._scoreBarPenalty.thickness = 0;
-        this._scoreBarPenalty.height = "34px";
+        this._scoreBarPenalty.height = "40px";
         this._scoreBarPenalty.background = "#ff5a5a";
         this._scoreBarPenalty.alpha = 0.85;
         this._scoreBarPenalty.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -89,20 +91,24 @@ export class WinScreen {
         this._scoreBarLabel = new TextBlock();
         this._scoreBarLabel.color = "#a9b8de";
         this._scoreBarLabel.fontFamily = "'Share Tech Mono', 'Courier New', monospace";
-        this._scoreBarLabel.fontSize = 16;
-        this._scoreBarLabel.height = "26px";
+        this._scoreBarLabel.fontSize = 20;
+        this._scoreBarLabel.height = "36px";
         panel.addControl(this._scoreBarLabel);
 
         this._scoreLegend = this._text(
             panel,
             "Green=Targets  Blue=Structures  Gold=Shot Score  Red=Powerup Cost",
-            13,
+            16,
             "#8f9fca",
         );
-        this._scoreLegend.height = "28px";
+        this._scoreLegend.height = "36px";
 
-        this._details = this._text(panel, "", 18, "#ddd");
-        this._details.height = "190px";
+        this._starTargets = this._text(panel, "", 18, "#c7d4f5");
+        this._starTargets.height = "64px";
+        this._starTargets.textWrapping = true;
+
+        this._details = this._text(panel, "", 22, "#ddd");
+        this._details.height = "320px";
         this._details.textWrapping = true;
 
         this._creditsBtn = this._button(panel, "Credits", () => this.onCredits?.());
@@ -120,8 +126,10 @@ export class WinScreen {
         } else {
             this._summary.text = `High score stays at ${breakdown.highScore}. Need ${breakdown.scoreToBeatHighScore} more to beat it.`;
         }
+        this._starTargets.text =
+            `Star targets  ★ ${breakdown.starThresholds[0]}   ★★ ${breakdown.starThresholds[1]}   ★★★ ${breakdown.starThresholds[2]}`;
         const targetScore = Math.max(1, breakdown.barTargetScore);
-        const trackWidth = 420;
+        const trackWidth = 520;
         if (breakdown.isNewHighScore && breakdown.previousHighScore > 0) {
             this._scoreBarLabel.text = `High score beaten by +${breakdown.barOverflowScore}`;
         } else if (breakdown.previousHighScore > 0) {
@@ -172,19 +180,21 @@ export class WinScreen {
         tb.color = color;
         tb.fontFamily = size >= 30 ? "'Press Start 2P', monospace" : "'Share Tech Mono', 'Courier New', monospace";
         tb.fontSize = size;
-        tb.height = `${size + 18}px`;
+        tb.height = `${size + 24}px`;
         parent.addControl(tb);
         return tb;
     }
 
     private _button(parent: StackPanel, label: string, cb: () => void): Button {
         const btn = Button.CreateSimpleButton(`btn_${label}`, label);
-        btn.width = "200px";
-        btn.height = "42px";
+        btn.width = "260px";
+        btn.height = "52px";
         btn.color = "white";
         btn.background = "#1d2a57";
         btn.cornerRadius = 8;
-        btn.paddingTopInPixels = 8;
+        btn.fontSize = 18;
+        btn.paddingTopInPixels = 10;
+        btn.paddingBottomInPixels = 8;
         btn.onPointerClickObservable.add(cb);
         parent.addControl(btn);
         return btn;

@@ -20,6 +20,7 @@ import {
     TITAN_CORE_SHOCKWAVE_OBSTACLE_IMPULSE,
     TITAN_CORE_SHOCKWAVE_RADIUS,
     TITAN_CORE_TARGET_DAMAGE,
+    TITAN_CORE_TARGET_BLAST_RADIUS,
     TARGET_HIT_VELOCITY_MIN,
 } from "../utils/Constants";
 
@@ -30,6 +31,8 @@ export interface CollisionResult {
     targetScore: number;
     obstacleScore: number;
     titanCoreConsumed: boolean;
+    hadImpact: boolean;
+    impactPoint: Vector3 | null;
 }
 
 interface ObstacleMotionState {
@@ -44,6 +47,7 @@ interface ObstacleMotionState {
 export class TargetSystem {
     private _obstacleMotion = new Map<string, ObstacleMotionState>();
     private _obstacleTargetHitCooldown = new Map<string, number>();
+    private _projectileObstacleHitCooldown = new Map<string, number>();
 
     /**
      * Run collision detection for the current frame.
@@ -62,6 +66,8 @@ export class TargetSystem {
             targetScore: 0,
             obstacleScore: 0,
             titanCoreConsumed: false,
+            hadImpact: false,
+            impactPoint: null,
         };
         const nowMs = Date.now();
         const activeObstacleIds = new Set<string>();
@@ -80,6 +86,8 @@ export class TargetSystem {
                 const tRad = (target.mesh.getBoundingInfo().boundingSphere?.radiusWorld) ?? 0.4;
                 const dist = Vector3.Distance(pPos, tPos);
                 if (dist < pRad + tRad && speed >= TARGET_HIT_VELOCITY_MIN) {
+                    result.hadImpact = true;
+                    result.impactPoint = target.mesh.position.clone();
                     const useTitanCore = titanCoreCharged && !result.titanCoreConsumed;
                     const hitDamage = useTitanCore ? TITAN_CORE_TARGET_DAMAGE : 1;
                     if (useTitanCore) {
@@ -117,7 +125,12 @@ export class TargetSystem {
             if (projectileActive) {
                 const closest = Vector3.Clamp(pPos, bb.minimumWorld, bb.maximumWorld);
                 const dist = Vector3.Distance(pPos, closest);
-                if (dist < pRad * 1.2 && speed >= TARGET_HIT_VELOCITY_MIN) {
+                const pairKey = `${projectile.mesh.uniqueId}|${obs.id}`;
+                const lastPairHit = this._projectileObstacleHitCooldown.get(pairKey) ?? 0;
+                if (dist < pRad * 1.2 && speed >= TARGET_HIT_VELOCITY_MIN && nowMs - lastPairHit >= 120) {
+                    this._projectileObstacleHitCooldown.set(pairKey, nowMs);
+                    result.hadImpact = true;
+                    result.impactPoint = closest.clone();
                     // Build impulse from the actual contact normal so blocks fall in a
                     // direction consistent with where they were hit.
                     const toContact = closest.subtract(pPos);
@@ -150,19 +163,22 @@ export class TargetSystem {
                         .add(new Vector3(0, upwardBias, 0))
                         .normalize();
 
+                    const outwardNormal = pPos.subtract(closest).lengthSquared() > 1e-8
+                        ? pPos.subtract(closest).normalize()
+                        : contactNormal.scale(-1);
                     const approachSpeed = Math.max(0, Vector3.Dot(projectile.velocity, contactNormal));
                     const useTitanCore = titanCoreCharged && !result.titanCoreConsumed;
-                    let impulseMag = Math.min((approachSpeed + speed * 0.2) * OBSTACLE_IMPULSE_MULT, 22);
+                    let impulseMag = Math.min((approachSpeed * 1.15 + speed * 0.45) * OBSTACLE_IMPULSE_MULT, 34);
                     if (useTitanCore) {
                         const empoweredBase =
-                            (approachSpeed + speed * 0.65) * OBSTACLE_IMPULSE_MULT * TITAN_CORE_OBSTACLE_IMPULSE_MULT;
-                        impulseMag = Math.min(empoweredBase, 96);
+                            (approachSpeed * 1.2 + speed * 0.8) * OBSTACLE_IMPULSE_MULT * TITAN_CORE_OBSTACLE_IMPULSE_MULT;
+                        impulseMag = Math.min(empoweredBase, 118);
                         result.titanCoreConsumed = true;
                     }
                     obs.applyImpulse(impulseDir.scale(impulseMag), closest);
 
                     // THEN apply damage
-                    let obstacleDamage = Math.min(Math.max(speed * 0.02, 0.1), 0.45);
+                    let obstacleDamage = Math.min(Math.max(speed * 0.05, 0.32), 1.15);
                     if (useTitanCore) {
                         obstacleDamage = Math.max(obstacleDamage * TITAN_CORE_OBSTACLE_DAMAGE_MULT, 1.4);
                     }
@@ -173,14 +189,16 @@ export class TargetSystem {
 
                     if (useTitanCore) {
                         this._applyTitanCoreShockwave(closest, obs, obstacles, result);
+                        this._applyTitanCoreTargetBlast(closest, targets, obstacles, result, explodedBarrelIds);
                     }
 
-                    projectile.velocity = projectile.velocity.scale(useTitanCore ? 0.86 : 0.35);
+                    this._separateProjectileFromObstacle(projectile, closest, outwardNormal, pRad, dist);
+                    projectile.velocity = this._computePostImpactVelocity(projectile.velocity, outwardNormal, useTitanCore);
                 }
             }
 
             // Obstacle -> target collision (falling/tumbling blocks can kill pigs).
-            if (obstacleSpeed < 1.15) continue;
+            if (obstacleSpeed < 0.8) continue;
 
             for (const target of targets) {
                 if (target.destroyed) continue;
@@ -189,20 +207,25 @@ export class TargetSystem {
                 const tRad = (target.mesh.getBoundingInfo().boundingSphere?.radiusWorld) ?? 0.4;
                 const closestToTarget = Vector3.Clamp(tPos, bb.minimumWorld, bb.maximumWorld);
                 const distToTarget = Vector3.Distance(tPos, closestToTarget);
-                if (distToTarget > tRad + 0.08) continue;
+                if (distToTarget > tRad + 0.2) continue;
 
                 const toTarget = tPos.subtract(currentPos);
                 if (toTarget.lengthSquared() < 1e-8) continue;
                 const towardTarget = toTarget.normalize();
                 const closingSpeed = Vector3.Dot(obstacleVelocity, towardTarget);
-                if (closingSpeed < 0.75) continue;
+                if (closingSpeed < 0.45) continue;
 
                 const pairKey = `${obs.id}|${target.id}`;
                 const lastPairHit = this._obstacleTargetHitCooldown.get(pairKey) ?? 0;
                 if (nowMs - lastPairHit < 180) continue;
                 this._obstacleTargetHitCooldown.set(pairKey, nowMs);
 
-                const crushDamage = Math.max(1, closingSpeed * 0.35);
+                const obstacleExtent = bb.maximumWorld.subtract(bb.minimumWorld).length();
+                const impactWeight = Math.max(0.7, obstacleExtent * 0.35);
+                const crushDamage = Math.min(
+                    3.6,
+                    Math.max(1, closingSpeed * 0.9 + obstacleSpeed * 0.55 + impactWeight * 0.2),
+                );
                 const killedByBlock = target.hit(crushDamage);
                 if (killedByBlock) {
                     this._registerTargetDestroyed(target, targets, obstacles, result, explodedBarrelIds);
@@ -223,8 +246,97 @@ export class TargetSystem {
                 this._obstacleTargetHitCooldown.delete(pairKey);
             }
         }
+        for (const pairKey of Array.from(this._projectileObstacleHitCooldown.keys())) {
+            const sep = pairKey.indexOf("|");
+            const obstacleId = sep >= 0 ? pairKey.slice(sep + 1) : pairKey;
+            if (!activeObstacleIds.has(obstacleId)) {
+                this._projectileObstacleHitCooldown.delete(pairKey);
+            }
+        }
 
         return result;
+    }
+
+    private _separateProjectileFromObstacle(
+        projectile: Projectile,
+        contactPoint: Vector3,
+        outwardNormal: Vector3,
+        projectileRadius: number,
+        distanceToSurface: number,
+    ): void {
+        const pushNormal = outwardNormal.lengthSquared() > 1e-8
+            ? outwardNormal.normalizeToNew()
+            : new Vector3(1, 0, 0);
+        const penetrationDepth = Math.max(0, projectileRadius - distanceToSurface);
+        const separation = Math.min(projectileRadius * 0.3, penetrationDepth + 0.025);
+
+        if (penetrationDepth <= 1e-4) {
+            return;
+        }
+
+        projectile.mesh.position.addInPlace(pushNormal.scale(separation));
+
+        const resolvedClosest = Vector3.Clamp(
+            projectile.mesh.position,
+            contactPoint.subtract(new Vector3(projectileRadius, projectileRadius, projectileRadius)),
+            contactPoint.add(new Vector3(projectileRadius, projectileRadius, projectileRadius)),
+        );
+        const resolvedOffset = projectile.mesh.position.subtract(resolvedClosest);
+        if (resolvedOffset.lengthSquared() < projectileRadius * projectileRadius * 0.18) {
+            projectile.mesh.position.addInPlace(pushNormal.scale(0.012));
+        }
+    }
+
+    private _computePostImpactVelocity(velocity: Vector3, outwardNormal: Vector3, empowered: boolean): Vector3 {
+        if (velocity.lengthSquared() < 1e-8) return velocity.clone();
+
+        const normal = outwardNormal.lengthSquared() > 1e-8
+            ? outwardNormal.normalizeToNew()
+            : new Vector3(0, 1, 0);
+        const incomingAlongNormal = Vector3.Dot(velocity, normal);
+        const normalComponent = normal.scale(incomingAlongNormal);
+        const tangentialComponent = velocity.subtract(normalComponent);
+
+        const tangentialRetention = empowered ? 0.84 : 0.66;
+        const bounceStrength = empowered ? 0.14 : 0.06;
+        let response = tangentialComponent.scale(tangentialRetention);
+
+        if (incomingAlongNormal < 0) {
+            response = response.add(normal.scale(-incomingAlongNormal * bounceStrength));
+        } else {
+            response = response.add(normalComponent.scale(0.08));
+        }
+
+        if (normal.y > 0.72) {
+            const incomingHorizontal = new Vector3(velocity.x, 0, velocity.z);
+            if (incomingHorizontal.lengthSquared() > 1e-8) {
+                response.addInPlace(incomingHorizontal.scale(empowered ? 0.08 : 0.05));
+            }
+            response.y = Math.max(response.y, empowered ? 0.22 : 0.08);
+        }
+
+        return response;
+    }
+
+    private _applyTitanCoreTargetBlast(
+        center: Vector3,
+        targets: Target[],
+        obstacles: Obstacle[],
+        result: CollisionResult,
+        explodedBarrelIds: Set<string>,
+    ): void {
+        for (const target of targets) {
+            if (target.destroyed) continue;
+
+            const dist = Vector3.Distance(center, target.mesh.position);
+            if (dist > TITAN_CORE_TARGET_BLAST_RADIUS) continue;
+
+            // Titan Core nearby blast should reliably clear pigs instead of launching them away.
+            const killed = target.hit(99);
+            if (killed) {
+                this._registerTargetDestroyed(target, targets, obstacles, result, explodedBarrelIds);
+            }
+        }
     }
 
     private _registerTargetDestroyed(

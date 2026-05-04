@@ -14,6 +14,8 @@ export class HUD {
     private _scoreText: TextBlock;
     private _targetsText: TextBlock;
     private _powerupText: TextBlock;
+    private _controlsSection: StackPanel;
+    private _controlsVisible = true;
 
     constructor(private _ui: AdvancedDynamicTexture) {
         this._shell = new Rectangle("hudShell");
@@ -46,15 +48,20 @@ export class HUD {
         this._targetsText = this._addStatusRow(panel, "Targets", "0", "#66d9ff");
         this._powerupText = this._addStatusRow(panel, "Powerup", "None", "#7b88b3");
 
-        this._addGap(panel, 8);
-        this._addDivider(panel);
-        this._addGap(panel, 8);
-        this._addHeader(panel, "CONTROLS");
-        this._addWASDControlRow(panel, "Steer");
-        this._addControlRow(panel, "ARROWS", "Steer (alt)");
-        this._addControlRow(panel, "SPACE", "Boost (once)");
-        this._addControlRow(panel, "DRAG", "Aim + launch");
-        this._addControlRow(panel, "ESC", "Options / resume");
+        this._controlsSection = new StackPanel("hudControlsSection");
+        this._controlsSection.isVertical = true;
+        this._controlsSection.width = "372px";
+        panel.addControl(this._controlsSection);
+
+        this._addGap(this._controlsSection, 8);
+        this._addDivider(this._controlsSection);
+        this._addGap(this._controlsSection, 8);
+        this._addHeader(this._controlsSection, "CONTROLS");
+        this._addWASDControlRow(this._controlsSection, "Steer");
+        this._addControlRow(this._controlsSection, "ARROWS", "Steer (alt)");
+        this._addControlRow(this._controlsSection, "SPACE", "Boost (once)");
+        this._addControlRow(this._controlsSection, "DRAG", "Aim + launch");
+        this._addControlRow(this._controlsSection, "ESC", "Options / resume");
     }
 
     update(
@@ -76,6 +83,12 @@ export class HUD {
 
     setVisible(visible: boolean): void {
         this._shell.isVisible = visible;
+    }
+
+    setControlsVisible(visible: boolean): void {
+        this._controlsVisible = visible;
+        this._controlsSection.isVisible = visible;
+        this._shell.height = visible ? "500px" : "230px";
     }
 
     private _addHeader(parent: StackPanel, text: string): TextBlock {

@@ -122,6 +122,12 @@
     font-size: 19px;
 }
 
+.menu-level-stars {
+    color: #ffd65a;
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+
 .menu-level-score {
     color: var(--menu-muted);
     font-size: 14px;

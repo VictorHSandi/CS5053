@@ -57,6 +57,7 @@ export class Game {
     private _titanCoreReadyNextShot = false;
     private _titanCoreActiveThisShot = false;
     private _optionsOpenInGame = false;
+    private _impactViewActiveThisShot = false;
 
     constructor(canvas: HTMLCanvasElement) {
         this._sceneManager = new SceneManager(canvas);
@@ -121,7 +122,9 @@ export class Game {
     }
 
     private _refreshMenuHighScores(): void {
-        this._mainMenu.setLevelHighScores(LEVELS.map((level) => this._highScores.get(level.id)));
+        const scores = LEVELS.map((level) => this._highScores.get(level.id));
+        const stars = LEVELS.map((level, index) => ScoreSystem.getStarsForScore(level, scores[index]));
+        this._mainMenu.setLevelHighScores(scores, stars);
     }
 
     private _refreshMenuProgress(): void {
@@ -189,6 +192,7 @@ export class Game {
         this._projectile.spawn(this._launcher.launchPoint);
         this._titanCoreReadyNextShot = false;
         this._titanCoreActiveThisShot = false;
+        this._impactViewActiveThisShot = false;
         this._projectile.projectile.setTitanCoreCharged(false);
         this._refreshShadowCasters();
         this._score.reset();
@@ -376,10 +380,12 @@ export class Game {
         const vel = this._launcher.launchVelocity.clone();
         this._titanCoreActiveThisShot = this._titanCoreReadyNextShot;
         this._titanCoreReadyNextShot = false;
+        this._impactViewActiveThisShot = false;
         this._score.recordShot();
         this._projectile.spawn(this._launcher.launchPoint);
         this._projectile.projectile.setTitanCoreCharged(this._titanCoreActiveThisShot);
         this._projectile.launch(vel);
+        this._ui.hud.setControlsVisible(true);
         this._refreshShadowCasters();
 
         const camStart = this._camera.camera.position.clone();
@@ -444,6 +450,7 @@ export class Game {
         this._launcher.configure(toVec3(def.launcherPosition), toVec3(def.launchDirection));
         this._launcher.setVisible(true);
         this._camera.setAimView(toVec3(def.launcherPosition), this._computeAimMaxX(def));
+        this._ui.hud.setControlsVisible(true);
         setSkyboxVisible(false);
         this._state.transition(GameState.Aiming);
     }
@@ -462,6 +469,12 @@ export class Game {
                 result.obstacleScore,
                 result.targetsHit.filter((target) => target.isObjective).length,
             );
+        }
+
+        if (result.hadImpact && !this._impactViewActiveThisShot) {
+            this._impactViewActiveThisShot = true;
+            this._ui.hud.setControlsVisible(false);
+            this._camera.setDestructionView(result.impactPoint ?? this._projectile.position);
         }
 
         // Play sound effects based on what was hit this frame

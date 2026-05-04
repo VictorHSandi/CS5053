@@ -8,6 +8,10 @@ import {
     CAM_AIM_LOOKAHEAD_X,
     CAM_AIM_TARGET_HEIGHT,
     CAM_AIM_ORTHO_HALF_HEIGHT,
+    CAM_DESTRUCTION_DISTANCE,
+    CAM_DESTRUCTION_HEIGHT,
+    CAM_DESTRUCTION_LOOKAHEAD_X,
+    CAM_DESTRUCTION_ORTHO_HALF_HEIGHT,
     CAM_FOLLOW_DISTANCE,
     CAM_FOLLOW_HEIGHT,
     CAM_TRANSITION_DURATION,
@@ -18,6 +22,7 @@ export enum CameraMode {
     Aim,
     Transition,
     Follow,
+    Destruction,
 }
 
 /**
@@ -28,6 +33,7 @@ export class CameraController {
     public mode: CameraMode = CameraMode.Aim;
     private _scene: Scene;
     private _aimMaxX: number | null = null;
+    private _orthoHalfHeight = CAM_AIM_ORTHO_HALF_HEIGHT;
 
     // aiming
     private _aimTarget = Vector3.Zero();
@@ -55,6 +61,7 @@ export class CameraController {
         this.mode = CameraMode.Aim;
         this._aimTarget = launcherPos.clone();
         this._aimMaxX = aimMaxX ?? null;
+        this._orthoHalfHeight = CAM_AIM_ORTHO_HALF_HEIGHT;
         // Camera sits to the side and slightly above
         this.camera.position = new Vector3(
             launcherPos.x,
@@ -66,6 +73,26 @@ export class CameraController {
                 launcherPos.x + CAM_AIM_LOOKAHEAD_X,
                 launcherPos.y + CAM_AIM_TARGET_HEIGHT,
                 launcherPos.z,
+            ),
+        );
+        this._applyAimOrtho();
+    }
+
+    setDestructionView(focusPos: Vector3, lookAheadX = CAM_DESTRUCTION_LOOKAHEAD_X): void {
+        this.mode = CameraMode.Destruction;
+        this._aimTarget = focusPos.clone();
+        this._aimMaxX = focusPos.x + lookAheadX + 10;
+        this._orthoHalfHeight = CAM_DESTRUCTION_ORTHO_HALF_HEIGHT;
+        this.camera.position = new Vector3(
+            focusPos.x - 1.5,
+            focusPos.y + CAM_DESTRUCTION_HEIGHT,
+            focusPos.z - CAM_DESTRUCTION_DISTANCE,
+        );
+        this.camera.setTarget(
+            new Vector3(
+                focusPos.x + lookAheadX,
+                Math.max(2.2, focusPos.y + 1.6),
+                focusPos.z,
             ),
         );
         this._applyAimOrtho();
@@ -122,7 +149,7 @@ export class CameraController {
         const engine = this._scene.getEngine();
         const renderHeight = Math.max(engine.getRenderHeight(), 1);
         const aspect = engine.getRenderWidth() / renderHeight;
-        const baseHalfHeight = CAM_AIM_ORTHO_HALF_HEIGHT;
+        const baseHalfHeight = this._orthoHalfHeight;
         const baseHalfWidth = baseHalfHeight * aspect;
 
         let halfWidth = baseHalfWidth;
