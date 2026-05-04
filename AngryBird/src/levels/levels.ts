@@ -47,7 +47,7 @@ export const LEVELS: LevelDef[] = [
     },
     {
         id: "level_2",
-        name: "Twin Tower Test",
+        name: "Tower Titans",
         skybox: "tropical",
         launcherPosition: { x: -14, y: 1, z: 0 },
         launchDirection: { x: 1, y: 0.46, z: 0 },
