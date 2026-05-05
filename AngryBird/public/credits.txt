@@ -25,5 +25,6 @@ Victor Sandi
 Special Thanks
 Doga Demirel
 Babylon.js
+Havok Engine
 
 Thank you for playing.
